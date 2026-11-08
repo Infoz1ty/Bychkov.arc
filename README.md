@@ -1,2 +1,0 @@
-# Bychkov.arc
-Smart archiver
