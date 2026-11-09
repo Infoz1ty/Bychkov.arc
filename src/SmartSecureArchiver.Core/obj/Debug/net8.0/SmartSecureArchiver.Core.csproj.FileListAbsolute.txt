@@ -1,0 +1,12 @@
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\bin\Debug\net8.0\SmartSecureArchiver.Core.deps.json
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\bin\Debug\net8.0\SmartSecureArchiver.Core.dll
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\bin\Debug\net8.0\SmartSecureArchiver.Core.pdb
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.AssemblyInfoInputs.cache
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.AssemblyInfo.cs
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.csproj.CoreCompileInputs.cache
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.sourcelink.json
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.dll
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\refint\SmartSecureArchiver.Core.dll
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\SmartSecureArchiver.Core.pdb
+C:\Users\mydevice\Documents\ByckovKrytui228\Bychkov.arc\src\SmartSecureArchiver.Core\obj\Debug\net8.0\ref\SmartSecureArchiver.Core.dll
