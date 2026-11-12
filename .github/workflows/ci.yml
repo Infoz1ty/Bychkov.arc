@@ -1,0 +1,30 @@
+name: Build & Test CI
+
+on:
+  push:
+    branches: [ main, "feature/**" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore SmartSecureArchiver.sln
+
+    - name: Build Solution
+      run: dotnet build SmartSecureArchiver.sln --no-restore --configuration Release
+
+    - name: Run Tests
+      run: dotnet test SmartSecureArchiver.sln --no-build --configuration Release --verbosity normal

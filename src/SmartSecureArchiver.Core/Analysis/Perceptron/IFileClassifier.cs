@@ -3,9 +3,13 @@ namespace SmartSecureArchiver.Core.Analysis;
 public interface IFileClassifier
 {
     /// <summary>
-    /// Класифікує файл на один із 7 типів за вектором ознак за допомогою MLP.
-    /// Повертає рекомендовану стратегію: стискати чи пропустити.
+    /// Класифікує файл на один із 7 типів (0..6) за вектором ознак за допомогою багатошарового перцептрона (MLP).
     /// </summary>
-    int Classify(FileFeatures features);
-    bool ShouldCompress(int fileClass);
+    byte Classify(FileFeatures features);
+
+    /// <summary>
+    /// Визначає, чи доцільно стискати файл (повертає false для класу 5 «вже стиснуте»
+    /// або при перевищенні порогу ентропії noCompressionEntropyThreshold для випадкового шуму).
+    /// </summary>
+    bool ShouldCompress(byte fileClass, FileFeatures features, double noCompressionEntropyThreshold = 7.95);
 }
