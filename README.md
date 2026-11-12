@@ -57,6 +57,7 @@
 
 ## Документація проєкту
 
+* [Правила для ШІ-агентів та розробників (`AGENTS.md` / `Code-guide`)](AGENTS.md)
 * [Архітектура та конвеєр обробки (`ARCHITECTURE.md`)](info%20-%20Folder/ARCHITECTURE.md)
 * [Лог архітектурних рішень (`DECISION.md`)](info%20-%20Folder/DECISION.md)
 * [Розподіл задач, контракти та чек-лист кейсів C1/C2/C5/D1 (`Issue.md`)](info%20-%20Folder/Issue.md)
