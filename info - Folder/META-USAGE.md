@@ -83,6 +83,19 @@
 * **Метод верифікації:**
   * Успішна збірка `dotnet build SmartSecureArchiver.sln` та проходження контрактних unit-тестів `dotnet test`.
 
+### Запис 4
+* **Дата:** 2026-11-14
+* **Учасник:** Мітяй Максим Владиславович (Учасник 1 — Стиснення + Розбір потоку)
+* **Інструмент:** Antigravity (Gemini 4 Argon Medium)
+* **Задача / Промпт:**
+  * Реалізація модуля канонічного стиснення Гаффмана та декодера/парсера LZ77 для Зрізу 1 (Issues `#14`–`#19`) суворо за контрактами репозиторію (`IHuffmanCodec`, `ILz77Parser`, `IBlockCompressor`) та специфікацією `FORMAT_SPEC_P2_2.md`.
+* **Згенерований результат:**
+  * Класи `FrequencyTable.cs`, `HuffmanNode.cs`, `MinHeap.cs`, `CanonicalHuffman.cs`, `BitWriter.cs`, `BitReader.cs`, `HuffmanCodec.cs`, `Lz77Parser.cs`, `BlockCompressor.cs` та набір unit-тестів `HuffmanAndBlockCompressorTests.cs`.
+* **Внесені зміни:**
+  * Забезпечено підтримку трьох окремих дерев (`LIT` `0..256`, `LEN` `0..255`, `DIST` `0..15`), обмеження довжини коду до 15 біт із цілочисельною перевіркою рівності Крафта ($\sum 2^{15 - L_i} = 32768$), обробку виродженого алфавіту (`nsym == 1`, `length = 1`, `code = 0`) та автоматичний перехід у `NO_COMPRESSION` при `coded_len >= raw_len`.
+* **Метод верифікації:**
+  * Збірка `dotnet build SmartSecureArchiver.sln` без попереджень і помилок та проходження unit-тестів на еталонних архівах `team/reference/ref_*.arc` із перевіркою `CRC32`.
+
 ---
 
 ## 4. Відповідальність
