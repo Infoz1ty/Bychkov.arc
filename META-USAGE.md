@@ -143,6 +143,25 @@
   * `dotnet test SmartSecureArchiver.sln` — 84/84 тестів.
   * Матриця помилок і macro-F1 збережені у `reports/classifier_metrics.json`.
 
+### Запис 9
+* **Дата:** 2026-11-16
+* **Учасник:** Залєвський Володимир (Учасник 3 — Захист + Оптимізація)
+* **Інструмент:** Antigravity (Gemini)
+* **Задача / Промпт:**
+  * Завершення задач Зрізів 2–4 для зони «Захист + Оптимізація» (`Issues #35`–`#38`): Генетичний алгоритм, Random Search baseline, експеримент «Зашифрувати перед стисненням» vs «Стиснути перед шифруванням», криптоаналіз слабких шифрів за n-грамами та інструмент модифікації байтів архіву.
+* **Згенерований результат:**
+  * Модуль ГА (`GeneticOptimizer`, `GaEvolutionModels`, адаптери `ParameterizedBlockCompressor`, `ParameterizedFileClassifier` без зміни контрактів інших зон).
+  * Експеримент порядку операцій (`CompressionOrderExperiment`) та генерація Таблиці №4 (`reports/table4_encrypt_vs_compress.md`).
+  * Порівняння ГА vs Random Search за рівного бюджету оцінок Q, збереження журналу еволюції (`reports/ga_evolution_log.json`) і Таблиці №5 (`reports/table5_ga_vs_random.md`).
+  * Модуль базової атаки (`NgramFrequencyScorer`, `WeakCiphers`, `WeakCipherGeneticAttacker`, `ArchiveTamperTool`), утиліта `tools/SmartSecureArchiver.Zone3Runner` та набір автотестів (`GeneticOptimizerTests`, `CompressionOrderExperimentTests`, `WeakCipherAttackTests`, `ArchiveTamperToolTests`).
+* **Внесені зміни:**
+  * Адаптовано оцінку n-грам (`NgramFrequencyScorer`) з позитивним зсувом відносно порогу та штрафом не-ASCII байтів, а також перевірку `VolumeHeader` nonce (offset 25) у `ArchiveTamperTool` для чистого тестування `E_HMAC`.
+  * Інтеграція параметрів ГА з конвеєром `ArchiveOrchestrator` виконана через декоратори без модифікації коду інших учасників.
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 120/120 тестів пройдено (включно з кейсом D1 №17, експериментом порядку операцій, атаками на Віженера EN/UA, підстановку, XOR та аудитом `ref_01_single_file.arc`).
+  * Прогін `SmartSecureArchiver.Zone3Runner` на повному корпусі `team/corpus/` (21 файл).
+
 ---
 
 ## 4. Відповідальність
