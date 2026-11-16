@@ -4,23 +4,28 @@ using SmartSecureArchiver.Core.Format;
 namespace SmartSecureArchiver.Core.Compression;
 
 /// <summary>
-/// Реалізація компресора та декомпресора блоків SARC v1 (Issue #43, розділ 3 FORMAT_SPEC_P2_2.md).
-/// Підтримує базовий режим NO_COMPRESSION (Зріз 1) та повний конвеєр LZ77 + Канонічний Гаффман,
-/// коли передані реалізації ILz77Parser та IHuffmanCodec.
+/// Реалізація стиснення та декомпресії блоків SARC v1 (LZ77 + Канонічний Гаффман)
+/// згідно з розділом 3 FORMAT_SPEC_P2.md (Зріз 1, Issues #14–#19).
+/// Автоматично встановлює NO_COMPRESSION (0x01), якщо allowCompression == false або coded_len >= raw_len.
 /// </summary>
 public sealed class BlockCompressor : IBlockCompressor
 {
-    public const int MaxLitSymbol = 256;
-    public const int MaxLenSymbol = 255;
-    public const int MaxDistSymbol = 15;
-    public const int MaxCodeLength = 15;
-    private const int KraftTargetSum = 1 << MaxCodeLength; // 32768
+    public const byte FlagCompressed = 0x00;
+    public const byte FlagNoCompression = 0x01;
 
-    private readonly ILz77Parser? _lz77Parser;
-    private readonly IHuffmanCodec? _huffmanCodec;
+    private readonly ILz77Parser _lz77Parser;
+    private readonly IHuffmanCodec _huffmanCodec;
 
-    public BlockCompressor(ILz77Parser? lz77Parser = null, IHuffmanCodec? huffmanCodec = null)
+    public BlockCompressor()
+        : this(new Lz77Parser(), new HuffmanCodec())
     {
+    }
+
+    public BlockCompressor(ILz77Parser lz77Parser, IHuffmanCodec huffmanCodec)
+    {
+        ArgumentNullException.ThrowIfNull(lz77Parser);
+        ArgumentNullException.ThrowIfNull(huffmanCodec);
+
         _lz77Parser = lz77Parser;
         _huffmanCodec = huffmanCodec;
     }
@@ -34,26 +39,27 @@ public sealed class BlockCompressor : IBlockCompressor
         int minMatchLength = 3,
         bool useLazyMatching = false)
     {
-        // Порожні блоки, вимкнене стиснення або відсутність підключених кодеків -> NO_COMPRESSION
-        if (!allowCompression || blockData.IsEmpty || _lz77Parser is null || _huffmanCodec is null)
+        if (!allowCompression || blockData.IsEmpty)
         {
-            blockFlags = FileBlock.NoCompressionFlag;
+            blockFlags = FlagNoCompression;
             return blockData.ToArray();
         }
 
-        IReadOnlyList<Lz77Token> tokens = _lz77Parser.Parse(blockData, windowSize);
-        byte[] bitStream = _huffmanCodec.Encode(tokens, out HuffmanCodeTables tables);
-        byte[] serializedCompressed = SerializeCompressedBlock(tables, (uint)tokens.Count, bitStream);
+        IReadOnlyList<Lz77Token> tokens = _lz77Parser is Lz77Parser concreteParser
+            ? concreteParser.Parse(blockData, windowSize, minMatchLength, useLazyMatching)
+            : _lz77Parser.Parse(blockData, windowSize);
 
-        // Якщо стиснутий блок не коротший за сирий (coded_len >= raw_len) -> NO_COMPRESSION (п. 2.4 FORMAT_SPEC_P2_2.md)
-        if (serializedCompressed.Length >= blockData.Length)
+        byte[] stream = _huffmanCodec.Encode(tokens, out HuffmanCodeTables tables);
+        byte[] codedBlock = SerializeCompressedBlock(tables, (uint)tokens.Count, stream);
+
+        if (codedBlock.Length >= blockData.Length)
         {
-            blockFlags = FileBlock.NoCompressionFlag;
+            blockFlags = FlagNoCompression;
             return blockData.ToArray();
         }
 
-        blockFlags = 0x00;
-        return serializedCompressed;
+        blockFlags = FlagCompressed;
+        return codedBlock;
     }
 
     /// <inheritdoc />
@@ -61,258 +67,86 @@ public sealed class BlockCompressor : IBlockCompressor
     {
         if (expectedRawLength < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(expectedRawLength));
+            throw new SarcException(SarcErrorCode.E_CODE, $"Invalid negative expectedRawLength: {expectedRawLength}.");
         }
 
-        if ((blockFlags & FileBlock.ReservedFlagsMask) != 0)
+        if ((blockFlags & ~FlagNoCompression) != 0)
         {
-            throw new SarcException(SarcErrorCode.E_PAYLOAD, $"Invalid reserved bits in block_flags: 0x{blockFlags:X2}.");
+            throw new SarcException(SarcErrorCode.E_PAYLOAD, $"Invalid unknown bits in block_flags: 0x{blockFlags:X2}.");
         }
 
-        // Режим NO_COMPRESSION (біт 0 = 1)
-        if ((blockFlags & FileBlock.NoCompressionFlag) != 0)
+        if ((blockFlags & FlagNoCompression) != 0)
         {
             if (codedData.Length != expectedRawLength)
             {
                 throw new SarcException(
-                    SarcErrorCode.E_PAYLOAD,
-                    $"NO_COMPRESSION block length ({codedData.Length}) does not match raw_len ({expectedRawLength}).");
+                    SarcErrorCode.E_CODE,
+                    $"NO_COMPRESSION block coded_len ({codedData.Length}) does not match raw_len ({expectedRawLength}).");
             }
 
             return codedData.ToArray();
         }
 
-        // Режим зі стисненням (біт 0 = 0): розбір 3 таблиць (LIT, LEN, DIST), token_count, stream_len, stream
         int offset = 0;
-        byte[] litLengths = ReadAndValidateCodeTable(codedData, ref offset, MaxLitSymbol, "LIT");
-        byte[] lenLengths = ReadAndValidateCodeTable(codedData, ref offset, MaxLenSymbol, "LEN");
-        byte[] distLengths = ReadAndValidateCodeTable(codedData, ref offset, MaxDistSymbol, "DIST");
+        byte[] litLengths = CanonicalHuffman.ReadTable(codedData, ref offset, FrequencyTable.LitAlphabetSize);
+        byte[] lenLengths = CanonicalHuffman.ReadTable(codedData, ref offset, FrequencyTable.LenAlphabetSize);
+        byte[] distLengths = CanonicalHuffman.ReadTable(codedData, ref offset, FrequencyTable.DistAlphabetSize);
 
-        if (codedData.Length - offset < 8)
+        if (offset + 8 > codedData.Length)
         {
-            throw new SarcException(SarcErrorCode.E_CODE, "Compressed block is truncated before token_count and stream_len.");
+            throw new SarcException(SarcErrorCode.E_CODE, "Unexpected end of compressed block before token_count and stream_len.");
         }
 
         uint tokenCount = BinaryPrimitives.ReadUInt32BigEndian(codedData.Slice(offset, 4));
         uint streamLen = BinaryPrimitives.ReadUInt32BigEndian(codedData.Slice(offset + 4, 4));
         offset += 8;
 
-        // Розархіватор зупиняється, прочитавши рівно token_count елементів. Байти після потоку неприпустимі (п. 3.1)
-        if (codedData.Length - offset != streamLen)
+        if ((long)offset + streamLen != codedData.Length)
         {
             throw new SarcException(
                 SarcErrorCode.E_CODE,
-                $"Compressed block stream_len ({streamLen}) does not match remaining bytes ({codedData.Length - offset}).");
+                $"Compressed block stream_len ({streamLen}) does not match remaining block bytes ({codedData.Length - offset}).");
         }
 
-        if (expectedRawLength == 0 && tokenCount == 0 && streamLen == 0)
+        if (tokenCount > (uint)expectedRawLength && expectedRawLength >= 0)
         {
-            return [];
-        }
-
-        if (_huffmanCodec is null || _lz77Parser is null)
-        {
-            throw new SarcException(
-                SarcErrorCode.E_CODE,
-                "Compressed block encountered, but Huffman/LZ77 decoders are not configured.");
+            throw new SarcException(SarcErrorCode.E_CODE, $"Compressed block token_count ({tokenCount}) exceeds raw_len ({expectedRawLength}).");
         }
 
         var tables = new HuffmanCodeTables(litLengths, lenLengths, distLengths);
         ReadOnlySpan<byte> bitstream = codedData.Slice(offset, (int)streamLen);
+        IReadOnlyList<Lz77Token> tokens = _huffmanCodec.Decode(bitstream, tables, (int)tokenCount);
 
-        IReadOnlyList<Lz77Token> tokens = _huffmanCodec.Decode(bitstream, tables, checked((int)tokenCount));
-        byte[] rawBytes = _lz77Parser.Decompress(tokens, expectedRawLength);
-
-        if (rawBytes.Length != expectedRawLength)
-        {
-            throw new SarcException(
-                SarcErrorCode.E_CODE,
-                $"Decompressed block size ({rawBytes.Length}) does not match expected raw_len ({expectedRawLength}).");
-        }
-
-        return rawBytes;
+        return _lz77Parser.Decompress(tokens, expectedRawLength);
     }
 
     /// <summary>
-    /// Серіалізує стиснутий блок згідно з п. 3.1 та п. 3.3 FORMAT_SPEC_P2_2.md:
-    /// таблиця LIT -> таблиця LEN -> таблиця DIST -> token_count (uint32_BE) -> stream_len (uint32_BE) -> stream.
+    /// Серіалізує стиснений блок за розділом 3.1 FORMAT_SPEC_P2.md:
+    /// [Таблиця LIT] + [Таблиця LEN] + [Таблиця DIST] + [token_count: uint32 BE] + [stream_len: uint32 BE] + [stream].
     /// </summary>
-    public static byte[] SerializeCompressedBlock(HuffmanCodeTables tables, uint tokenCount, ReadOnlySpan<byte> bitStream)
+    public static byte[] SerializeCompressedBlock(HuffmanCodeTables tables, uint tokenCount, ReadOnlySpan<byte> stream)
     {
         ArgumentNullException.ThrowIfNull(tables);
 
-        int litSymCount = CountNonZeroAndValidateTable(tables.LitLengths, MaxLitSymbol, "LIT");
-        int lenSymCount = CountNonZeroAndValidateTable(tables.LenLengths, MaxLenSymbol, "LEN");
-        int distSymCount = CountNonZeroAndValidateTable(tables.DistLengths, MaxDistSymbol, "DIST");
+        var output = new List<byte>(64 + stream.Length);
+        CanonicalHuffman.WriteTable(tables.LitLengths, output);
+        CanonicalHuffman.WriteTable(tables.LenLengths, output);
+        CanonicalHuffman.WriteTable(tables.DistLengths, output);
 
-        int totalSize =
-            (2 + litSymCount * 3) +
-            (2 + lenSymCount * 3) +
-            (2 + distSymCount * 3) +
-            4 + 4 + bitStream.Length;
+        Span<byte> header = stackalloc byte[8];
+        BinaryPrimitives.WriteUInt32BigEndian(header[..4], tokenCount);
+        BinaryPrimitives.WriteUInt32BigEndian(header.Slice(4, 4), (uint)stream.Length);
 
-        byte[] buffer = new byte[totalSize];
-        Span<byte> span = buffer.AsSpan();
-        int offset = 0;
-
-        WriteCodeTable(span, ref offset, tables.LitLengths, (ushort)litSymCount);
-        WriteCodeTable(span, ref offset, tables.LenLengths, (ushort)lenSymCount);
-        WriteCodeTable(span, ref offset, tables.DistLengths, (ushort)distSymCount);
-
-        BinaryPrimitives.WriteUInt32BigEndian(span.Slice(offset, 4), tokenCount);
-        BinaryPrimitives.WriteUInt32BigEndian(span.Slice(offset + 4, 4), (uint)bitStream.Length);
-        offset += 8;
-
-        bitStream.CopyTo(span.Slice(offset, bitStream.Length));
-        return buffer;
-    }
-
-    /// <summary>
-    /// Зчитує та валідує одну таблицю кодів Гаффмана (п. 3.2–3.3 FORMAT_SPEC_P2_2.md, ADR-03).
-    /// Перевіряє межі алфавіту, зростання символів, довжину 1..15, вироджений випадок (nsym == 1) та рівність Крафта.
-    /// </summary>
-    public static byte[] ReadAndValidateCodeTable(ReadOnlySpan<byte> buffer, ref int offset, int maxSymbol, string tableName)
-    {
-        if (buffer.Length - offset < 2)
+        for (int i = 0; i < 8; i++)
         {
-            throw new SarcException(SarcErrorCode.E_CODE, $"Truncated {tableName} Huffman table header.");
+            output.Add(header[i]);
         }
 
-        ushort nsym = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(offset, 2));
-        offset += 2;
-
-        if (nsym > maxSymbol + 1)
+        for (int i = 0; i < stream.Length; i++)
         {
-            throw new SarcException(
-                SarcErrorCode.E_CODE,
-                $"Table {tableName} has too many symbols ({nsym} > {maxSymbol + 1}).");
+            output.Add(stream[i]);
         }
 
-        long tableBytes = (long)nsym * 3;
-        if (buffer.Length - offset < tableBytes)
-        {
-            throw new SarcException(SarcErrorCode.E_CODE, $"Truncated {tableName} Huffman table entries.");
-        }
-
-        byte[] lengths = new byte[maxSymbol + 1];
-        int prevSymbol = -1;
-        int kraftSum = 0;
-
-        for (int i = 0; i < nsym; i++)
-        {
-            ushort symbol = BinaryPrimitives.ReadUInt16BigEndian(buffer.Slice(offset, 2));
-            byte length = buffer[offset + 2];
-            offset += 3;
-
-            if (symbol > maxSymbol)
-            {
-                throw new SarcException(
-                    SarcErrorCode.E_CODE,
-                    $"Symbol {symbol} in {tableName} exceeds maximum allowed symbol {maxSymbol}.");
-            }
-
-            if (symbol <= prevSymbol)
-            {
-                throw new SarcException(
-                    SarcErrorCode.E_CODE,
-                    $"Symbols in {tableName} table are not in strictly ascending order ({symbol} after {prevSymbol}).");
-            }
-
-            if (length is 0 or > MaxCodeLength)
-            {
-                throw new SarcException(
-                    SarcErrorCode.E_CODE,
-                    $"Invalid Huffman code length {length} for symbol {symbol} in {tableName} (must be 1..{MaxCodeLength}).");
-            }
-
-            lengths[symbol] = length;
-            prevSymbol = symbol;
-            kraftSum += 1 << (MaxCodeLength - length);
-        }
-
-        // Перевірка повноти коду за розділом 3.3 FORMAT_SPEC_P2_2.md та ADR-03:
-        // - При nsym == 1 довжина єдиного символу має дорівнювати 1 (kraftSum == 16384)
-        // - При nsym > 1 сума Σ 2^(15 - L_i) має точно дорівнювати 32768 (Σ 2^(-L_i) == 1)
-        if (nsym == 1)
-        {
-            if (kraftSum != (1 << (MaxCodeLength - 1)))
-            {
-                throw new SarcException(
-                    SarcErrorCode.E_CODE,
-                    $"Degenerate single-symbol table {tableName} must have code length 1.");
-            }
-        }
-        else if (nsym > 1)
-        {
-            if (kraftSum != KraftTargetSum)
-            {
-                throw new SarcException(
-                    SarcErrorCode.E_CODE,
-                    $"Kraft equality violated in {tableName} table (sum = {kraftSum}, expected {KraftTargetSum}).");
-            }
-        }
-
-        return lengths;
-    }
-
-    private static int CountNonZeroAndValidateTable(byte[] lengths, int maxSymbol, string tableName)
-    {
-        if (lengths is null || lengths.Length != maxSymbol + 1)
-        {
-            throw new SarcException(
-                SarcErrorCode.E_CODE,
-                $"Table {tableName} lengths array must have size {maxSymbol + 1}.");
-        }
-
-        int count = 0;
-        int kraftSum = 0;
-
-        for (int s = 0; s <= maxSymbol; s++)
-        {
-            byte len = lengths[s];
-            if (len == 0)
-            {
-                continue;
-            }
-
-            if (len > MaxCodeLength)
-            {
-                throw new SarcException(
-                    SarcErrorCode.E_CODE,
-                    $"Symbol {s} in {tableName} has code length {len} > {MaxCodeLength}.");
-            }
-
-            count++;
-            kraftSum += 1 << (MaxCodeLength - len);
-        }
-
-        if (count == 1 && kraftSum != (1 << (MaxCodeLength - 1)))
-        {
-            throw new SarcException(SarcErrorCode.E_CODE, $"Single symbol in {tableName} must have length 1.");
-        }
-
-        if (count > 1 && kraftSum != KraftTargetSum)
-        {
-            throw new SarcException(SarcErrorCode.E_CODE, $"Kraft equality violated in {tableName} when serializing.");
-        }
-
-        return count;
-    }
-
-    private static void WriteCodeTable(Span<byte> destination, ref int offset, byte[] lengths, ushort nsym)
-    {
-        BinaryPrimitives.WriteUInt16BigEndian(destination.Slice(offset, 2), nsym);
-        offset += 2;
-
-        for (ushort symbol = 0; symbol < lengths.Length; symbol++)
-        {
-            byte len = lengths[symbol];
-            if (len > 0)
-            {
-                BinaryPrimitives.WriteUInt16BigEndian(destination.Slice(offset, 2), symbol);
-                destination[offset + 2] = len;
-                offset += 3;
-            }
-        }
+        return output.ToArray();
     }
 }
