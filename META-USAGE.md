@@ -131,6 +131,29 @@
 * **Метод верифікації:**
   * Збірка `dotnet build SmartSecureArchiver.sln` без попереджень і помилок та проходження unit-тестів на еталонних архівах `team/reference/ref_*.arc` із перевіркою `CRC32`.
 
+### Запис 7
+* **Дата:** 2026-11-16
+* **Учасник:** Пуш Володимир (зона «Аналіз даних + Пакування»)
+* **Інструмент:** DeepSeek V4.1 Flash (агент OpenCode)
+* **Задача / Промпт:**
+  * Зріз 2, Issues #22–#27: MLP з нуля (архітектура, forward, backprop, навчання, серіалізація), macro-F1 і матриця помилок, вибір стратегії `NO_COMPRESSION`, ДП-рюкзак 0/1 та жадібний алгоритм із Таблицею №3.
+  * Без сторонніх ML-, оптимізаційних та компресійних бібліотек.
+* **Згенерований результат:**
+  * `MlpNetwork` (52 → 64 ReLU → 7 Softmax), `MlpTrainer` (cross-entropy + mini-batch SGD), `FeatureNormalizer`, `MlpModelSerializer`, `ModelMetrics`, `MlpClassifier`.
+  * `KnapsackPacker` (точний ДП `O(n·W)` із відновленням множини та greedy за `v/w`).
+  * Тренувальний інструмент `tools/SmartSecureArchiver.Training` і benchmark `tools/SmartSecureArchiver.Benchmarks`.
+  * Артефакти: `models/mlp_weights.bin`, `reports/classifier_metrics.json`, `reports/table3_knapsack.md`.
+* **Внесені зміни:**
+  * Протокол навчання: 3 ініціалізації (seed 2026–2028), вибір моделі за macro-F1 на `valid/`.
+  * Відновлення рюкзака зроблено через бітові матриці рішень, щоб уникнути повторного вибору одного блоку.
+  * Формула `W` відповідає `AGENTS.md`; вага блока вже містить 15 байтів таблиці блоків.
+  * Стратегія: клас 5 та ентропія ≥ 7.95 → `NO_COMPRESSION`.
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 80/80 тестів.
+  * macro-F1 на `valid/` = 0.9706 при `F1_min = 0.61`.
+  * Таблиця №3 згенерована на реальному `team/corpus` (21 файл, 32 блоки).
+
 ---
 
 ## 4. Відповідальність
