@@ -13,4 +13,20 @@ public sealed record FileBlock(
     uint CodedLength,
     byte BlockFlags,
     byte[] Data
-);
+)
+{
+    /// <summary>Фіксований розмір заголовка одного запису в таблиці блоків (15 байтів).</summary>
+    public const int HeaderSize = 15;
+
+    /// <summary>Маска біта 0 (NO_COMPRESSION).</summary>
+    public const byte NoCompressionFlag = 0x01;
+
+    /// <summary>Маска зарезервованих бітів 1..7 у block_flags (мають дорівнювати 0).</summary>
+    public const byte ReservedFlagsMask = 0xFE;
+
+    /// <summary>Чи збережено блок у режимі без стиснення (NO_COMPRESSION = 1).</summary>
+    public bool IsNoCompression => (BlockFlags & NoCompressionFlag) != 0;
+
+    /// <summary>Повна вага блоку для задачі про рюкзак 0/1: w = coded_len + 15 байтів.</summary>
+    public int KnapsackWeight => checked((int)CodedLength + HeaderSize);
+}
