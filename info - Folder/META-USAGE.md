@@ -154,6 +154,25 @@
   * macro-F1 на `valid/` = 0.9706 при `F1_min = 0.61`.
   * Таблиця №3 згенерована на реальному `team/corpus` (21 файл, 32 блоки).
 
+### Запис 8
+* **Дата:** 2026-11-16
+* **Учасник:** Пуш Володимир (зона «Аналіз даних + Пакування»)
+* **Інструмент:** DeepSeek V4.1 Flash (агент OpenCode)
+* **Задача / Промпт:**
+  * Зріз 3–4: інтеграція навчених ваг MLP у конвеєр вибору стратегії та перевірка детермінованості класифікатора і пакувальника на всьому корпусі.
+* **Згенерований результат:**
+  * Вбудована модель `models/mlp_weights.bin` як `EmbeddedResource` у `SmartSecureArchiver.Core`.
+  * `MlpClassifier.CreateDefault()` та `ArchiveOrchestratorFactory.CreateDefault()` — типова збірка конвеєра `FeatureExtractor + MlpClassifier + KnapsackPacker`.
+  * Інтеграційні тести: повний round-trip архіву через MLP-пайплайн, детермінізм класифікатора на `team/corpus`, детермінізм ДП-рюкзака на реальних блоках корпусу.
+* **Внесені зміни:**
+  * `MlpModelSerializer` отримав overload-и `Save(Stream)` / `Load(Stream)` для завантаження вбудованого ресурсу.
+  * Клас `ArchiveOrchestrator` учасника 4 не змінювався — інтеграція виконана через нову фабрику, щоб не конфліктувати з його зоною.
+  * Порожні файли та довільні бінарні дані перевірені в round-trip.
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 84/84 тестів.
+  * Матриця помилок і macro-F1 збережені у `reports/classifier_metrics.json`.
+
 ---
 
 ## 4. Відповідальність

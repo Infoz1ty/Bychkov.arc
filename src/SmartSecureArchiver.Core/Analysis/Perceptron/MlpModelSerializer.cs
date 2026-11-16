@@ -27,7 +27,21 @@ public static class MlpModelSerializer
         }
 
         using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
-        using var writer = new BinaryWriter(stream);
+        Save(stream, network, normalizer, leaveOpen: false);
+    }
+
+    public static void Save(Stream stream, MlpNetwork network, FeatureNormalizer normalizer, bool leaveOpen = true)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        ArgumentNullException.ThrowIfNull(network);
+        ArgumentNullException.ThrowIfNull(normalizer);
+
+        if (normalizer.Mean.Length != network.InputSize)
+        {
+            throw new ArgumentException("Normalizer dimension does not match network input size.", nameof(normalizer));
+        }
+
+        using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen);
 
         writer.Write(Magic);
         writer.Write(Version);
@@ -49,7 +63,14 @@ public static class MlpModelSerializer
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        using var reader = new BinaryReader(stream);
+        return Load(stream, leaveOpen: false);
+    }
+
+    public static (MlpNetwork Network, FeatureNormalizer Normalizer) Load(Stream stream, bool leaveOpen = true)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+
+        using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen);
 
         if (reader.ReadInt32() != Magic)
         {
