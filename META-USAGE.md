@@ -207,6 +207,20 @@
   * `dotnet build SmartSecureArchiver.sln -warnaserror` — 0 помилок, 0 попереджень.
   * `dotnet test SmartSecureArchiver.sln` — 120/120 тестів пройдено (включно з кейсом D1 №17, Таблицями №4–№5, атаками Віженера EN/UA, підстановки, XOR та аудитом `ref_01_single_file.arc`).
 
+### Запис 11
+* **Дата:** 2026-11-17
+* **Учасник:** Учасник 1 (Мітяй Максим)
+* **Інструмент:** Antigravity (Gemini 4 Argon Medium)
+* **Задача / Промпт:**
+  * Нарізка піксель-арт спрайтів із `assets/gui/` (`Elements.png`, `Rectangle.png`, `Bars.png`, `Background.png`) за макетами `Example.png` і `Example (2).png` та створення WPF-проєкту `src/SmartSecureArchiver.Gui` у масштабі 4x (`640×640`) із прив'язкою до `SmartSecureArchiver.Core`.
+* **Згенерований результат:**
+  * Проєкт `SmartSecureArchiver.Gui` (`SmartSecureArchiver.Gui.csproj`, `App.xaml`, `MainWindow.xaml`, `MainWindow.xaml.cs`) та 35 вирізаних піксель-арт спрайтів у `src/SmartSecureArchiver.Gui/Assets/`.
+* **Внесені зміни:**
+  * Забезпечено точне позиціонування всіх панелей, кнопок, чекбокса `СТИСНЕННЯ` (зелена галочка / червоний хрестик), кнопки-ока пароля та 11-кадрового прогрес-бару у масштабі 4x із `BitmapScalingMode="NearestNeighbor"`, асинхронний запуск `ArchiveOrchestrator` через `Task.Run` та обробку всіх кодів `SarcErrorCode`.
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 124/124 тестів пройдено.
+
 ---
 
 ## 4. Відповідальність

@@ -1,0 +1,421 @@
+<Window x:Class="SmartSecureArchiver.Gui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bychkov.arc — SARC v1 Розумний захищений архіватор"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        RenderOptions.BitmapScalingMode="NearestNeighbor"
+        RenderOptions.EdgeMode="Aliased"
+        Background="#7DC2C7">
+
+    <!-- Полотно 640x640 (цілочисельний масштаб 4x від базового макета 160x160) -->
+    <Canvas Width="640"
+            Height="640"
+            SnapsToDevicePixels="True"
+            UseLayoutRounding="True"
+            RenderOptions.BitmapScalingMode="NearestNeighbor">
+
+        <!-- 1. Фонове полотно (0, 0, 160x160 -> 640x640) -->
+        <Image Canvas.Left="0"
+               Canvas.Top="0"
+               Width="640"
+               Height="640"
+               Source="pack://application:,,,/Assets/background.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- 2. Заголовок SARC v1 (X=3, Y=2, W=53, H=10 -> Left=12, Top=8, W=212, H=40) -->
+        <Image Canvas.Left="12"
+               Canvas.Top="8"
+               Width="212"
+               Height="40"
+               Source="pack://application:,,,/Assets/label_sarc_v1.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Індикатор шляху КУДИ: у правій частині шапки -->
+        <Image Canvas.Left="244"
+               Canvas.Top="20"
+               Width="92"
+               Height="20"
+               Source="pack://application:,,,/Assets/label_kudy.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <Border Canvas.Left="344"
+                Canvas.Top="14"
+                Width="272"
+                Height="32"
+                Background="#3E4342"
+                BorderBrush="#222525"
+                BorderThickness="2"
+                SnapsToDevicePixels="True">
+            <TextBlock x:Name="TargetPathTextBlock"
+                       Margin="6,0,6,0"
+                       VerticalAlignment="Center"
+                       FontFamily="Consolas"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Foreground="#E8F6F7"
+                       Text="archive.arc (авто)"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip="Цільовий шлях архіву або теки (змінюється кнопкою ОГЛЯД...)" />
+        </Border>
+
+        <!-- 3. Верхня панель списку файлів (X=5, Y=15, W=149, H=30 -> Left=20, Top=60, W=596, H=120) -->
+        <Image Canvas.Left="20"
+               Canvas.Top="60"
+               Width="596"
+               Height="120"
+               Source="pack://application:,,,/Assets/panel_top.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Кнопка ОГЛЯД... (X=8, Y=17, W=37, H=11 -> Left=32, Top=68, W=148, H=44) -->
+        <Button x:Name="BrowseButton"
+                Canvas.Left="32"
+                Canvas.Top="68"
+                Width="148"
+                Height="44"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="BrowseButton_Click"
+                ToolTip="Обрати шлях збереження архіву (.arc) або відкрити існуючий архів">
+            <Image Source="pack://application:,,,/Assets/btn_browse.png"
+                   Stretch="Fill"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        </Button>
+
+        <!-- Кнопка + ФАЙЛИ (X=56, Y=17, W=37, H=11 -> Left=224, Top=68, W=148, H=44) -->
+        <Button x:Name="AddFilesButton"
+                Canvas.Left="224"
+                Canvas.Top="68"
+                Width="148"
+                Height="44"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="AddFilesButton_Click"
+                ToolTip="Додати файли до списку архівування або томи .arc для розпакування">
+            <Image Source="pack://application:,,,/Assets/btn_add_files.png"
+                   Stretch="Fill"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        </Button>
+
+        <!-- Кнопка ОЧИСТИТИ (X=104, Y=17, W=47, H=11 -> Left=416, Top=68, W=188, H=44) -->
+        <Button x:Name="ClearButton"
+                Canvas.Left="416"
+                Canvas.Top="68"
+                Width="188"
+                Height="44"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="ClearButton_Click"
+                ToolTip="Очистити список вибраних файлів та скинути прогрес">
+            <Image Source="pack://application:,,,/Assets/btn_clear.png"
+                   Stretch="Fill"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        </Button>
+
+        <!-- Область піксельних іконок доданих файлів (X=9, Y=29 -> Left=36, Top=116, як у Example (2).png) -->
+        <ScrollViewer Canvas.Left="36"
+                      Canvas.Top="116"
+                      Width="568"
+                      Height="60"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Disabled"
+                      Background="Transparent"
+                      BorderThickness="0">
+            <ItemsControl x:Name="FilesItemsControl">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Width="80"
+                                    Margin="0,0,4,0"
+                                    Orientation="Vertical"
+                                    ToolTip="{Binding FullTooltip}">
+                            <Image Width="72"
+                                   Height="42"
+                                   HorizontalAlignment="Left"
+                                   Source="{Binding IconSource}"
+                                   Stretch="Fill"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                            <TextBlock Width="76"
+                                       HorizontalAlignment="Left"
+                                       FontFamily="Consolas"
+                                       FontSize="10"
+                                       FontWeight="Bold"
+                                       Foreground="#FFF7B2"
+                                       Text="{Binding DisplayName}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock x:Name="EmptyFilesHintTextBlock"
+                   Canvas.Left="36"
+                   Canvas.Top="132"
+                   Width="560"
+                   FontFamily="Consolas"
+                   FontSize="13"
+                   FontWeight="Bold"
+                   Foreground="#B8C4C4"
+                   IsHitTestVisible="False"
+                   Text="[Натисніть '+ ФАЙЛИ' або 'ОГЛЯД...', щоб додати файли чи архів .arc]" />
+
+        <!-- 4. Центральна панель налаштувань (X=24, Y=51, W=111, H=35 -> Left=96, Top=204, W=444, H=140) -->
+        <Image Canvas.Left="96"
+               Canvas.Top="204"
+               Width="444"
+               Height="140"
+               Source="pack://application:,,,/Assets/panel_middle.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Напис ПАРОЛЬ: (X=27, Y=54, W=31, H=5 -> Left=108, Top=216, W=124, H=20) -->
+        <Image Canvas.Left="108"
+               Canvas.Top="216"
+               Width="124"
+               Height="20"
+               Source="pack://application:,,,/Assets/label_password.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Поле вводу пароля (прихований режим та відкритий режим) -->
+        <PasswordBox x:Name="SecretPasswordBox"
+                     Canvas.Left="238"
+                     Canvas.Top="210"
+                     Width="178"
+                     Height="30"
+                     Padding="4,2,4,2"
+                     VerticalContentAlignment="Center"
+                     Background="#2C2F2E"
+                     BorderBrush="#1A1C1C"
+                     BorderThickness="2"
+                     CaretBrush="#FFFFFF"
+                     FontFamily="Consolas"
+                     FontSize="14"
+                     FontWeight="Bold"
+                     Foreground="#FFFFFF"
+                     PasswordChanged="SecretPasswordBox_PasswordChanged"
+                     Visibility="Collapsed" />
+
+        <TextBox x:Name="VisiblePasswordTextBox"
+                 Canvas.Left="238"
+                 Canvas.Top="210"
+                 Width="178"
+                 Height="30"
+                 Padding="4,2,4,2"
+                 VerticalContentAlignment="Center"
+                 Background="#2C2F2E"
+                 BorderBrush="#1A1C1C"
+                 BorderThickness="2"
+                 CaretBrush="#FFFFFF"
+                 FontFamily="Consolas"
+                 FontSize="14"
+                 FontWeight="Bold"
+                 Foreground="#8CFF98"
+                 Text="algo2026"
+                 TextChanged="VisiblePasswordTextBox_TextChanged"
+                 Visibility="Visible" />
+
+        <!-- Іконка замка стану пароля (відкритий / закритий замок із Elements.png) -->
+        <Image x:Name="LockStateImage"
+               Canvas.Left="424"
+               Canvas.Top="208"
+               Width="28"
+               Height="36"
+               Source="pack://application:,,,/Assets/icon_lock_closed.png"
+               Stretch="Fill"
+               ToolTip="Стан ключа захисту PBKDF2 + AES-256-CTR + HMAC-SHA256"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Інтерактивна кнопка-око (X=115, Y=52, W=19, H=9 -> Left=460, Top=208, W=76, H=36) -->
+        <Button x:Name="EyeToggleButton"
+                Canvas.Left="460"
+                Canvas.Top="208"
+                Width="76"
+                Height="36"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="EyeToggleButton_Click"
+                ToolTip="Показати або приховати символи пароля">
+            <Image x:Name="EyeIconImage"
+                   Source="pack://application:,,,/Assets/icon_eye_open.png"
+                   Stretch="Fill"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        </Button>
+
+        <!-- Напис РОЗМІР ТОМУ: (X=27, Y=66, W=55, H=5 -> Left=108, Top=264, W=220, H=20) -->
+        <Image Canvas.Left="108"
+               Canvas.Top="264"
+               Width="220"
+               Height="20"
+               Source="pack://application:,,,/Assets/label_volume_size.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Поле вводу РОЗМІР ТОМУ у КБ -->
+        <TextBox x:Name="VolumeSizeKbTextBox"
+                 Canvas.Left="336"
+                 Canvas.Top="258"
+                 Width="136"
+                 Height="30"
+                 Padding="4,2,4,2"
+                 VerticalContentAlignment="Center"
+                 Background="#2C2F2E"
+                 BorderBrush="#1A1C1C"
+                 BorderThickness="2"
+                 CaretBrush="#FFFFFF"
+                 FontFamily="Consolas"
+                 FontSize="14"
+                 FontWeight="Bold"
+                 Foreground="#FFD866"
+                 Text="64"
+                 ToolTip="Максимальний розмір одного тому в КБ (0 або порожньо = один том без розбиття; >0 = багатотомний ДП-рюкзак 0/1)" />
+
+        <TextBlock Canvas.Left="478"
+                   Canvas.Top="265"
+                   FontFamily="Consolas"
+                   FontSize="13"
+                   FontWeight="Bold"
+                   Foreground="#D4E2E2"
+                   Text="КБ" />
+
+        <!-- Напис СТИСНЕННЯ (X=27, Y=78, W=45, H=5 -> Left=108, Top=312, W=180, H=20) -->
+        <Image Canvas.Left="108"
+               Canvas.Top="312"
+               Width="180"
+               Height="20"
+               Source="pack://application:,,,/Assets/label_compression.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Інтерактивний чекбокс СТИСНЕННЯ (X=74, Y=74, W=14, H=14 -> Left=296, Top=296, W=56, H=56) -->
+        <Button x:Name="CompressionCheckButton"
+                Canvas.Left="296"
+                Canvas.Top="296"
+                Width="56"
+                Height="56"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="CompressionCheckButton_Click"
+                ToolTip="Увімкнути (зелена галочка) або вимкнути (червоний хрестик) інтелектуальне стиснення MLP + LZ77 + Канонічний Гаффман">
+            <Canvas Width="56" Height="56">
+                <!-- Рамка чекбокса (X=74, Y=74 -> 0, 0) -->
+                <Image Canvas.Left="0"
+                       Canvas.Top="0"
+                       Width="56"
+                       Height="56"
+                       Source="pack://application:,,,/Assets/icon_checkbox_box.png"
+                       Stretch="Fill"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                <!-- Зелена галочка (X=75, Y=76, W=12, H=10 -> Left=4, Top=8, W=48, H=40) -->
+                <Image x:Name="CheckMarkImage"
+                       Canvas.Left="4"
+                       Canvas.Top="8"
+                       Width="48"
+                       Height="40"
+                       Source="pack://application:,,,/Assets/icon_check.png"
+                       Stretch="Fill"
+                       Visibility="Visible"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                <!-- Червоний хрестик (X=77, Y=77, W=8, H=8 -> Left=12, Top=12, W=32, H=32) -->
+                <Image x:Name="CrossMarkImage"
+                       Canvas.Left="12"
+                       Canvas.Top="12"
+                       Width="32"
+                       Height="32"
+                       Source="pack://application:,,,/Assets/icon_cross.png"
+                       Stretch="Fill"
+                       Visibility="Collapsed"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+            </Canvas>
+        </Button>
+
+        <TextBlock x:Name="CompressionStateHintText"
+                   Canvas.Left="362"
+                   Canvas.Top="314"
+                   FontFamily="Consolas"
+                   FontSize="12"
+                   FontWeight="Bold"
+                   Foreground="#8CFF98"
+                   Text="MLP + LZ77 + HUFF" />
+
+        <!-- 5. Кнопки дії АРХІВУВАТИ та РОЗАРХІВУВАТИ (Y=90 -> Top=360) -->
+        <!-- АРХІВУВАТИ (X=6, Y=90, W=70, H=11 -> Left=24, Top=360, W=280, H=44) -->
+        <Button x:Name="ArchiveButton"
+                Canvas.Left="24"
+                Canvas.Top="360"
+                Width="280"
+                Height="44"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="ArchiveButton_Click"
+                ToolTip="Створити захищений архів SARC v1 із доданих файлів">
+            <Image Source="pack://application:,,,/Assets/btn_archive.png"
+                   Stretch="Fill"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        </Button>
+
+        <!-- РОЗАРХІВУВАТИ (X=84, Y=90, W=70, H=11 -> Left=336, Top=360, W=280, H=44) -->
+        <Button x:Name="ExtractButton"
+                Canvas.Left="336"
+                Canvas.Top="360"
+                Width="280"
+                Height="44"
+                Style="{StaticResource PixelArtButtonStyle}"
+                Click="ExtractButton_Click"
+                ToolTip="Перевірити HMAC-SHA256, розшифрувати AES-256-CTR і розпакувати архів SARC v1">
+            <Image Source="pack://application:,,,/Assets/btn_extract.png"
+                   Stretch="Fill"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+        </Button>
+
+        <!-- 6. Нижня панель LOG: (X=6, Y=103, W=148, H=40 -> Left=24, Top=412, W=592, H=160) -->
+        <Image Canvas.Left="24"
+               Canvas.Top="412"
+               Width="592"
+               Height="160"
+               Source="pack://application:,,,/Assets/panel_bottom.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <!-- Напис LOG: (X=9, Y=106, W=16, H=5 -> Left=36, Top=424, W=64, H=20) -->
+        <Image Canvas.Left="36"
+               Canvas.Top="424"
+               Width="64"
+               Height="20"
+               Source="pack://application:,,,/Assets/label_log.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+        <TextBox x:Name="LogTextBox"
+                 Canvas.Left="36"
+                 Canvas.Top="448"
+                 Width="568"
+                 Height="114"
+                 Padding="4"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 FontFamily="Consolas"
+                 FontSize="12"
+                 Foreground="#E6F4F1"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto" />
+
+        <!-- 7. Піксельний прогрес-бар (X=34, Y=148, W=92, H=10 -> Left=136, Top=592, W=368, H=40) -->
+        <Image x:Name="ProgressBarImage"
+               Canvas.Left="136"
+               Canvas.Top="592"
+               Width="368"
+               Height="40"
+               Source="pack://application:,,,/Assets/bar_00.png"
+               Stretch="Fill"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+    </Canvas>
+</Window>
