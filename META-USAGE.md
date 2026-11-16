@@ -190,6 +190,23 @@
   * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
   * `dotnet test SmartSecureArchiver.sln` — 115/115 тестів пройдено на 100%.
 
+### Запис 10
+* **Дата:** 2026-11-16
+* **Учасник:** Залєвський Володимир (Учасник 3 — Захист + Оптимізація)
+* **Інструмент:** Antigravity (Gemini)
+* **Задача / Промпт:**
+  * Реалізація задач, пов'язаних із Генетичним алгоритмом (приблизно половина зони відповідальності: `#35` — базовий ГА, `#36` — Random Search baseline і журнал еволюції, а також ГА-криптоаналіз слабких шифрів у `#38`), у той час як криптографічний тракт (`#31`–`#34`), експеримент порядку шифрування/стиснення (`#37`) і скрипт перевірки цілісності (`ArchiveTamperTool`) виконувалися власноруч.
+* **Згенерований результат:**
+  * Модуль ГА (`GeneticOptimizer`, `GaEvolutionModels`) та адаптери `ParameterizedBlockCompressor`, `ParameterizedFileClassifier` для інтеграції з `ArchiveOrchestrator`.
+  * Реалізація `RunRandomSearch`, збереження журналу `reports/ga_evolution_log.json` і формування Таблиці №5 (`reports/table5_ga_vs_random.md`).
+  * Генетичний криптоаналізатор слабких шифрів (`WeakCipherGeneticAttacker`, `NgramFrequencyScorer`, `WeakCiphers`) і набір автотестів для ГА та атак (`GeneticOptimizerTests`, `WeakCipherAttackTests`).
+* **Внесені зміни:**
+  * Криптографія (`CryptoEngine`), експеримент порядку операцій (`CompressionOrderExperiment`, Таблиця №4) та аудит цілісності архіву (`ArchiveTamperTool`) написані та перевірені власноруч без генерації коду ШІ.
+  * У згенерованому коді ГА та криптоаналізу доопрацьовано `NgramFrequencyScorer` (позитивний зсув оцінки та український профіль під корпус), підібрано бюджет еволюції (`pop=10, gen=6`, 58 оцінок $Q$) і перевірено відсутність сторонніх бібліотек оптимізації.
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln -warnaserror` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 120/120 тестів пройдено (включно з кейсом D1 №17, Таблицями №4–№5, атаками Віженера EN/UA, підстановки, XOR та аудитом `ref_01_single_file.arc`).
+
 ---
 
 ## 4. Відповідальність

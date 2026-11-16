@@ -1,0 +1,713 @@
+{
+  "generated_at_utc": "2026-11-16T19:48:41.7367191Z",
+  "genetic_algorithm": {
+    "Seed": 2001,
+    "PopulationSize": 10,
+    "Generations": 6,
+    "TotalEvaluations": 58,
+    "BestInitialQ": 0.7596146737678926,
+    "BestFinalQ": 0.7597770041895942,
+    "BestParameters": {
+      "WindowSize": 23808,
+      "MinMatchLength": 5,
+      "NoCompressionEntropyThreshold": 7.38
+    },
+    "GenerationsHistory": [
+      {
+        "Generation": 0,
+        "BestQ": 0.7596146737678926,
+        "AverageQ": 0.7547618432341956,
+        "WorstQ": 0.7390445906297249,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9957474381816507,
+        "BestParameters": {
+          "WindowSize": 17664,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.21
+        },
+        "EvaluationsSoFar": 10
+      },
+      {
+        "Generation": 1,
+        "BestQ": 0.7596244067762241,
+        "AverageQ": 0.7582423395100416,
+        "WorstQ": 0.7545665933775705,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9957798815427555,
+        "BestParameters": {
+          "WindowSize": 25344,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.44
+        },
+        "EvaluationsSoFar": 18
+      },
+      {
+        "Generation": 2,
+        "BestQ": 0.7596867503503597,
+        "AverageQ": 0.7595104094140432,
+        "WorstQ": 0.7591477513392783,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9959876934565411,
+        "BestParameters": {
+          "WindowSize": 17664,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.72
+        },
+        "EvaluationsSoFar": 26
+      },
+      {
+        "Generation": 3,
+        "BestQ": 0.7597650290607516,
+        "AverageQ": 0.7586420136008226,
+        "WorstQ": 0.7562671001538941,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9962486224911807,
+        "BestParameters": {
+          "WindowSize": 25344,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.38
+        },
+        "EvaluationsSoFar": 34
+      },
+      {
+        "Generation": 4,
+        "BestQ": 0.7597650290607516,
+        "AverageQ": 0.7590022196934986,
+        "WorstQ": 0.7563100813646615,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9962486224911807,
+        "BestParameters": {
+          "WindowSize": 25344,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.38
+        },
+        "EvaluationsSoFar": 42
+      },
+      {
+        "Generation": 5,
+        "BestQ": 0.7597650290607516,
+        "AverageQ": 0.7594575573817023,
+        "WorstQ": 0.7586289400403392,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9962486224911807,
+        "BestParameters": {
+          "WindowSize": 25344,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.38
+        },
+        "EvaluationsSoFar": 50
+      },
+      {
+        "Generation": 6,
+        "BestQ": 0.7597770041895942,
+        "AverageQ": 0.7596884801853291,
+        "WorstQ": 0.7594478913398299,
+        "BestS": 0.6584149175905678,
+        "BestT": 0.9962885395873224,
+        "BestParameters": {
+          "WindowSize": 23808,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.38
+        },
+        "EvaluationsSoFar": 58
+      }
+    ],
+    "ElapsedSeconds": 7.4771689
+  },
+  "random_search": {
+    "Seed": 2001,
+    "Iterations": 58,
+    "BestQ": 0.7597612599197885,
+    "AverageQ": 0.7532425919727669,
+    "BestS": 0.6584162111823207,
+    "BestT": 0.9962330403072135,
+    "BestParameters": {
+      "WindowSize": 15104,
+      "MinMatchLength": 5,
+      "NoCompressionEntropyThreshold": 6.44
+    },
+    "History": [
+      {
+        "Iteration": 1,
+        "CandidateQ": 0.7595825383241483,
+        "BestQSoFar": 0.7595825383241483,
+        "CandidateParameters": {
+          "WindowSize": 19456,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.02
+        }
+      },
+      {
+        "Iteration": 2,
+        "CandidateQ": 0.7596841543311972,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 28672,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.15
+        }
+      },
+      {
+        "Iteration": 3,
+        "CandidateQ": 0.7562332229348888,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 7680,
+          "MinMatchLength": 7,
+          "NoCompressionEntropyThreshold": 7.48
+        }
+      },
+      {
+        "Iteration": 4,
+        "CandidateQ": 0.744455430577184,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 16384,
+          "MinMatchLength": 11,
+          "NoCompressionEntropyThreshold": 7.64
+        }
+      },
+      {
+        "Iteration": 5,
+        "CandidateQ": 0.7546980761195484,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 17920,
+          "MinMatchLength": 8,
+          "NoCompressionEntropyThreshold": 6.17
+        }
+      },
+      {
+        "Iteration": 6,
+        "CandidateQ": 0.7596652475064979,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 27136,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 6.7
+        }
+      },
+      {
+        "Iteration": 7,
+        "CandidateQ": 0.7472892314637709,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 15104,
+          "MinMatchLength": 10,
+          "NoCompressionEntropyThreshold": 7.3
+        }
+      },
+      {
+        "Iteration": 8,
+        "CandidateQ": 0.7581736042241651,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 7424,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 6.11
+        }
+      },
+      {
+        "Iteration": 9,
+        "CandidateQ": 0.7585135705880072,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 14080,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 6.22
+        }
+      },
+      {
+        "Iteration": 10,
+        "CandidateQ": 0.7546645953225417,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 24832,
+          "MinMatchLength": 8,
+          "NoCompressionEntropyThreshold": 6.22
+        }
+      },
+      {
+        "Iteration": 11,
+        "CandidateQ": 0.7504349129309962,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 28160,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 7.18
+        }
+      },
+      {
+        "Iteration": 12,
+        "CandidateQ": 0.7502815886399382,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 15360,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 7.07
+        }
+      },
+      {
+        "Iteration": 13,
+        "CandidateQ": 0.7596656829287177,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 22272,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 6.38
+        }
+      },
+      {
+        "Iteration": 14,
+        "CandidateQ": 0.758646077842642,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 13312,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 6.6
+        }
+      },
+      {
+        "Iteration": 15,
+        "CandidateQ": 0.7586405600786608,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 17920,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 7.5
+        }
+      },
+      {
+        "Iteration": 16,
+        "CandidateQ": 0.7503747274878523,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 20480,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 7.45
+        }
+      },
+      {
+        "Iteration": 17,
+        "CandidateQ": 0.7471790168311537,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 10496,
+          "MinMatchLength": 10,
+          "NoCompressionEntropyThreshold": 6.48
+        }
+      },
+      {
+        "Iteration": 18,
+        "CandidateQ": 0.7403846847408051,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 6400,
+          "MinMatchLength": 12,
+          "NoCompressionEntropyThreshold": 6.3
+        }
+      },
+      {
+        "Iteration": 19,
+        "CandidateQ": 0.7586043764220974,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 8448,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 6.39
+        }
+      },
+      {
+        "Iteration": 20,
+        "CandidateQ": 0.7562237656408947,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 15360,
+          "MinMatchLength": 7,
+          "NoCompressionEntropyThreshold": 7.78
+        }
+      },
+      {
+        "Iteration": 21,
+        "CandidateQ": 0.7563669921316443,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 15872,
+          "MinMatchLength": 7,
+          "NoCompressionEntropyThreshold": 7.79
+        }
+      },
+      {
+        "Iteration": 22,
+        "CandidateQ": 0.7503572258370406,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 20992,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 6.32
+        }
+      },
+      {
+        "Iteration": 23,
+        "CandidateQ": 0.7582758061766782,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 8192,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 7.8
+        }
+      },
+      {
+        "Iteration": 24,
+        "CandidateQ": 0.7591175934984072,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 18432,
+          "MinMatchLength": 4,
+          "NoCompressionEntropyThreshold": 6.04
+        }
+      },
+      {
+        "Iteration": 25,
+        "CandidateQ": 0.7580848929342754,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 5888,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 6.77
+        }
+      },
+      {
+        "Iteration": 26,
+        "CandidateQ": 0.7503131816372127,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 12032,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 7.34
+        }
+      },
+      {
+        "Iteration": 27,
+        "CandidateQ": 0.7444427215355931,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 10752,
+          "MinMatchLength": 11,
+          "NoCompressionEntropyThreshold": 7.4
+        }
+      },
+      {
+        "Iteration": 28,
+        "CandidateQ": 0.7563620224066813,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 13312,
+          "MinMatchLength": 7,
+          "NoCompressionEntropyThreshold": 7.64
+        }
+      },
+      {
+        "Iteration": 29,
+        "CandidateQ": 0.7504402449190234,
+        "BestQSoFar": 0.7596841543311972,
+        "CandidateParameters": {
+          "WindowSize": 28672,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 7.42
+        }
+      },
+      {
+        "Iteration": 30,
+        "CandidateQ": 0.7597612599197885,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 15104,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 6.44
+        }
+      },
+      {
+        "Iteration": 31,
+        "CandidateQ": 0.759687447074367,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 11776,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.6
+        }
+      },
+      {
+        "Iteration": 32,
+        "CandidateQ": 0.7411110047661408,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 10496,
+          "MinMatchLength": 12,
+          "NoCompressionEntropyThreshold": 7.86
+        }
+      },
+      {
+        "Iteration": 33,
+        "CandidateQ": 0.7412219532621194,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 13824,
+          "MinMatchLength": 12,
+          "NoCompressionEntropyThreshold": 7.47
+        }
+      },
+      {
+        "Iteration": 34,
+        "CandidateQ": 0.7582270792383599,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 19712,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 7.08
+        }
+      },
+      {
+        "Iteration": 35,
+        "CandidateQ": 0.7472906475678667,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 27392,
+          "MinMatchLength": 10,
+          "NoCompressionEntropyThreshold": 7.13
+        }
+      },
+      {
+        "Iteration": 36,
+        "CandidateQ": 0.7582250651550331,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 7936,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 7.84
+        }
+      },
+      {
+        "Iteration": 37,
+        "CandidateQ": 0.7444049427624916,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 25344,
+          "MinMatchLength": 11,
+          "NoCompressionEntropyThreshold": 7.42
+        }
+      },
+      {
+        "Iteration": 38,
+        "CandidateQ": 0.7591739782548863,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 17664,
+          "MinMatchLength": 4,
+          "NoCompressionEntropyThreshold": 7.31
+        }
+      },
+      {
+        "Iteration": 39,
+        "CandidateQ": 0.7580195002735601,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 6912,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 6.03
+        }
+      },
+      {
+        "Iteration": 40,
+        "CandidateQ": 0.7453558942853069,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 3328,
+          "MinMatchLength": 10,
+          "NoCompressionEntropyThreshold": 7.92
+        }
+      },
+      {
+        "Iteration": 41,
+        "CandidateQ": 0.7472429201697911,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 15360,
+          "MinMatchLength": 10,
+          "NoCompressionEntropyThreshold": 7.72
+        }
+      },
+      {
+        "Iteration": 42,
+        "CandidateQ": 0.7596745314989342,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 22528,
+          "MinMatchLength": 5,
+          "NoCompressionEntropyThreshold": 7.87
+        }
+      },
+      {
+        "Iteration": 43,
+        "CandidateQ": 0.744228019694005,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 7936,
+          "MinMatchLength": 11,
+          "NoCompressionEntropyThreshold": 6.26
+        }
+      },
+      {
+        "Iteration": 44,
+        "CandidateQ": 0.7412416570917235,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 15616,
+          "MinMatchLength": 12,
+          "NoCompressionEntropyThreshold": 7.53
+        }
+      },
+      {
+        "Iteration": 45,
+        "CandidateQ": 0.7470637994189842,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 30976,
+          "MinMatchLength": 10,
+          "NoCompressionEntropyThreshold": 6.83
+        }
+      },
+      {
+        "Iteration": 46,
+        "CandidateQ": 0.7542123424867165,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 5888,
+          "MinMatchLength": 8,
+          "NoCompressionEntropyThreshold": 7.4
+        }
+      },
+      {
+        "Iteration": 47,
+        "CandidateQ": 0.7501646940075086,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 9216,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 7.32
+        }
+      },
+      {
+        "Iteration": 48,
+        "CandidateQ": 0.7503863105472688,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 26112,
+          "MinMatchLength": 9,
+          "NoCompressionEntropyThreshold": 6.67
+        }
+      },
+      {
+        "Iteration": 49,
+        "CandidateQ": 0.7442443525341136,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 17152,
+          "MinMatchLength": 11,
+          "NoCompressionEntropyThreshold": 6.13
+        }
+      },
+      {
+        "Iteration": 50,
+        "CandidateQ": 0.7590264069874961,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 5632,
+          "MinMatchLength": 4,
+          "NoCompressionEntropyThreshold": 7.68
+        }
+      },
+      {
+        "Iteration": 51,
+        "CandidateQ": 0.7586701647130701,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 30208,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 6.3
+        }
+      },
+      {
+        "Iteration": 52,
+        "CandidateQ": 0.7591593473222766,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 25600,
+          "MinMatchLength": 4,
+          "NoCompressionEntropyThreshold": 7.2
+        }
+      },
+      {
+        "Iteration": 53,
+        "CandidateQ": 0.7591737569993555,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 22528,
+          "MinMatchLength": 4,
+          "NoCompressionEntropyThreshold": 7.08
+        }
+      },
+      {
+        "Iteration": 54,
+        "CandidateQ": 0.7580907950294242,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 20992,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 6.31
+        }
+      },
+      {
+        "Iteration": 55,
+        "CandidateQ": 0.758666695573762,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 26112,
+          "MinMatchLength": 6,
+          "NoCompressionEntropyThreshold": 7.87
+        }
+      },
+      {
+        "Iteration": 56,
+        "CandidateQ": 0.7547326206614198,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 31232,
+          "MinMatchLength": 8,
+          "NoCompressionEntropyThreshold": 6.86
+        }
+      },
+      {
+        "Iteration": 57,
+        "CandidateQ": 0.7581324444680452,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 8448,
+          "MinMatchLength": 3,
+          "NoCompressionEntropyThreshold": 7.05
+        }
+      },
+      {
+        "Iteration": 58,
+        "CandidateQ": 0.7443249566444216,
+        "BestQSoFar": 0.7597612599197885,
+        "CandidateParameters": {
+          "WindowSize": 11008,
+          "MinMatchLength": 11,
+          "NoCompressionEntropyThreshold": 6.21
+        }
+      }
+    ],
+    "ElapsedSeconds": 8.7734254
+  }
+}
