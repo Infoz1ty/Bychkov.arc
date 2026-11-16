@@ -102,7 +102,7 @@ public static class Program
         int maxVolumeBytes = maxVolumeOverride ?? config.MaxVolumeBytes;
         int blockSize = blockSizeOverride ?? config.BlockSize;
 
-        var orchestrator = new ArchiveOrchestrator(blockSize: blockSize);
+        var orchestrator = ArchiveOrchestratorFactory.CreateDefault(blockSize: blockSize);
 
         try
         {
