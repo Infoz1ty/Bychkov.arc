@@ -94,7 +94,16 @@ public class Lz77BenchmarkTests
             string docsDir = Path.Combine(repoRoot, "docs");
             Directory.CreateDirectory(docsDir);
             string reportPath = Path.Combine(docsDir, "BENCHMARK_ZONE1.md");
-            File.WriteAllText(reportPath, markdownReport, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            bool forceUpdate = string.Equals(
+                Environment.GetEnvironmentVariable("SARC_UPDATE_BENCHMARK"),
+                "1",
+                StringComparison.Ordinal);
+
+            if (!File.Exists(reportPath) || forceUpdate)
+            {
+                File.WriteAllText(reportPath, markdownReport, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            }
+
             Assert.True(File.Exists(reportPath));
         }
     }
