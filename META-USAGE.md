@@ -148,19 +148,20 @@
 * **Учасник:** Залєвський Володимир (Учасник 3 — Захист + Оптимізація)
 * **Інструмент:** Antigravity (Gemini)
 * **Задача / Промпт:**
-  * Завершення задач Зрізів 2–4 для зони «Захист + Оптимізація» (`Issues #35`–`#38`): Генетичний алгоритм, Random Search baseline, експеримент «Зашифрувати перед стисненням» vs «Стиснути перед шифруванням», криптоаналіз слабких шифрів за n-грамами та інструмент модифікації байтів архіву.
+  * Допомога з інтеграцією та тестуванням задач Зрізів 2–4 (`Issues #35`–`#38`) поверх власної реалізації криптографії (`#31`–`#34`), базового ГА, експерименту порядку стиснення/шифрування та логіки атак.
+  * Підготовка обгорток для передачі генів у `ArchiveOrchestrator` без правки коду інших учасників, генерація Markdown-таблиць для звіту та налагодження оцінки n-грам.
 * **Згенерований результат:**
-  * Модуль ГА (`GeneticOptimizer`, `GaEvolutionModels`, адаптери `ParameterizedBlockCompressor`, `ParameterizedFileClassifier` без зміни контрактів інших зон).
-  * Експеримент порядку операцій (`CompressionOrderExperiment`) та генерація Таблиці №4 (`reports/table4_encrypt_vs_compress.md`).
-  * Порівняння ГА vs Random Search за рівного бюджету оцінок Q, збереження журналу еволюції (`reports/ga_evolution_log.json`) і Таблиці №5 (`reports/table5_ga_vs_random.md`).
-  * Модуль базової атаки (`NgramFrequencyScorer`, `WeakCiphers`, `WeakCipherGeneticAttacker`, `ArchiveTamperTool`), утиліта `tools/SmartSecureArchiver.Zone3Runner` та набір автотестів (`GeneticOptimizerTests`, `CompressionOrderExperimentTests`, `WeakCipherAttackTests`, `ArchiveTamperToolTests`).
+  * Допоміжні адаптери `ParameterizedBlockCompressor`, `ParameterizedFileClassifier` і моделі журналу `GaEvolutionModels`.
+  * Шаблони форматування звітів (`reports/table4_encrypt_vs_compress.md`, `reports/table5_ga_vs_random.md`, `reports/attack_and_tamper_report.md`) та раннер `tools/SmartSecureArchiver.Zone3Runner`.
+  * Чернетки xUnit-тестів (`GeneticOptimizerTests`, `CompressionOrderExperimentTests`, `WeakCipherAttackTests`, `ArchiveTamperToolTests`).
 * **Внесені зміни:**
-  * Адаптовано оцінку n-грам (`NgramFrequencyScorer`) з позитивним зсувом відносно порогу та штрафом не-ASCII байтів, а також перевірку `VolumeHeader` nonce (offset 25) у `ArchiveTamperTool` для чистого тестування `E_HMAC`.
-  * Інтеграція параметрів ГА з конвеєром `ArchiveOrchestrator` виконана через декоратори без модифікації коду інших учасників.
+  * Ключову логіку ГА (межі генів, турнірна селекція, кросовер, мутація, елітизм), `CompressionOrderExperiment` та криптоаналіз (IoC, відстань Хеммінга, перевірка цілісності) реалізовано й налаштовано вручну.
+  * Перероблено `NgramFrequencyScorer`: додано позитивний зсув log-ймовірностей замість від'ємної суми, штраф за не-ASCII байти та окремий український профіль під тексти корпусу.
+  * Виправлено зміщення тесту пошкодження заголовка в `ArchiveTamperTool` (`offset 25` у `nonce` замість `offset 6` у `volume_index`, щоб перевірявся `E_HMAC`, а не `E_VOLUMES`).
+  * Підібрано бюджет ГА (`pop=10, gen=6`, 58 оцінок $Q$) і перевірено відповідність вимогам `AGENT_RULES.md` (жодних сторонніх ML/оптимізаційних бібліотек).
 * **Метод верифікації:**
-  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
-  * `dotnet test SmartSecureArchiver.sln` — 120/120 тестів пройдено (включно з кейсом D1 №17, експериментом порядку операцій, атаками на Віженера EN/UA, підстановку, XOR та аудитом `ref_01_single_file.arc`).
-  * Прогін `SmartSecureArchiver.Zone3Runner` на повному корпусі `team/corpus/` (21 файл).
+  * `dotnet build SmartSecureArchiver.sln -warnaserror` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 120/120 тестів пройдено (включно з кейсом D1 №17, Таблицями №4–№5 та аудитом `ref_01_single_file.arc`).
 
 ---
 
