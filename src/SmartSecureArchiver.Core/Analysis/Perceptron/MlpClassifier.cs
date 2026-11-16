@@ -60,6 +60,21 @@ public sealed class MlpClassifier : IFileClassifier
         return new MlpClassifier(network, normalizer);
     }
 
+    /// <summary>
+    /// Завантажує навчену модель, вбудовану в збірку (models/mlp_weights.bin як EmbeddedResource).
+    /// Використовується типовим конвеєром архіватора, щоб не залежати від робочого каталогу.
+    /// </summary>
+    public static MlpClassifier CreateDefault()
+    {
+        const string resourceName = "SmartSecureArchiver.Core.mlp_weights.bin";
+
+        using Stream stream = typeof(MlpClassifier).Assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException($"Embedded MLP model '{resourceName}' was not found.");
+
+        (MlpNetwork network, FeatureNormalizer normalizer) = MlpModelSerializer.Load(stream);
+        return new MlpClassifier(network, normalizer);
+    }
+
     public void Save(string path)
     {
         MlpModelSerializer.Save(path, _network, _normalizer);

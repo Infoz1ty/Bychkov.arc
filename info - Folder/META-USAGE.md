@@ -156,18 +156,22 @@
 
 ### Запис 8
 * **Дата:** 2026-11-16
-* **Учасник:** Учасник 1 (Мітяй Максим)
-* **Інструмент:** Antigravity (Gemini 4 Argon Medium)
+* **Учасник:** Пуш Володимир (зона «Аналіз даних + Пакування»)
+* **Інструмент:** DeepSeek V4.1 Flash (агент OpenCode)
 * **Задача / Промпт:**
-  * Реалізація експериментально-бенчмарк частини Зрізу 2 для Зони 1 (Issues `#11`–`#13`, Кейс C1 №9): порівняння жадібного (`Greedy LZ77`) та лінивого (`Lazy Greedy LZ77`) розбору на всіх 7 групах корпусу `team/corpus/` та формування Таблиці №1 у `docs/BENCHMARK_ZONE1.md`.
+  * Зріз 3–4: інтеграція навчених ваг MLP у конвеєр вибору стратегії та перевірка детермінованості класифікатора і пакувальника на всьому корпусі.
 * **Згенерований результат:**
-  * Клас автотестів і бенчмарку `Lz77BenchmarkTests.cs` (`tests/SmartSecureArchiver.Tests/Compression/Lz77BenchmarkTests.cs`) та згенерований звіт `docs/BENCHMARK_ZONE1.md` із Таблицею №1 по всіх 21 файлах і зведеною таблицею по 7 групах.
+  * Вбудована модель `models/mlp_weights.bin` як `EmbeddedResource` у `SmartSecureArchiver.Core`.
+  * `MlpClassifier.CreateDefault()` та `ArchiveOrchestratorFactory.CreateDefault()` — типова збірка конвеєра `FeatureExtractor + MlpClassifier + KnapsackPacker`.
+  * Інтеграційні тести: повний round-trip архіву через MLP-пайплайн, детермінізм класифікатора на `team/corpus`, детермінізм ДП-рюкзака на реальних блоках корпусу.
 * **Внесені зміни:**
-  * Додано попередній прогрів JIT та вимірювання мінімального часу з 3 прогонів `Stopwatch` окремо для стиснення і декомпресії.
-  * Додано параметризовані тести `Lz77_SlidingWindowAndMinMatchParameters_RespectGeneticAlgorithmBounds` для перевірки передачі параметрів `(window_size, min_match)` від Генетичного Алгоритму (Issue `#11`).
+  * `MlpModelSerializer` отримав overload-и `Save(Stream)` / `Load(Stream)` для завантаження вбудованого ресурсу.
+  * Клас `ArchiveOrchestrator` учасника 4 не змінювався — інтеграція виконана через нову фабрику, щоб не конфліктувати з його зоною.
+  * Порожні файли та довільні бінарні дані перевірені в round-trip.
 * **Метод верифікації:**
   * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
-  * `dotnet test SmartSecureArchiver.sln` — 85/85 тестів пройдено успішно, побайтовий збіг (`original == restored`) підтверджено на всьому корпусі.
+  * `dotnet test SmartSecureArchiver.sln` — 84/84 тестів.
+  * Матриця помилок і macro-F1 збережені у `reports/classifier_metrics.json`.
 
 ---
 

@@ -7,4 +7,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\models\mlp_weights.bin"
+                      LogicalName="SmartSecureArchiver.Core.mlp_weights.bin" />
+  </ItemGroup>
+
 </Project>
