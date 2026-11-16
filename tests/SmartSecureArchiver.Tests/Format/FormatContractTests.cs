@@ -270,9 +270,9 @@ public class FormatContractTests
         // Перевіряємо таблиці Гаффмана LIT, LEN, DIST та потік 7 байтів (розділ 8 FORMAT_SPEC_P2_2.md)
         ReadOnlySpan<byte> codedBlock = blocks[0].Data;
         int offset = 0;
-        byte[] litLengths = BlockCompressor.ReadAndValidateCodeTable(codedBlock, ref offset, BlockCompressor.MaxLitSymbol, "LIT");
-        byte[] lenLengths = BlockCompressor.ReadAndValidateCodeTable(codedBlock, ref offset, BlockCompressor.MaxLenSymbol, "LEN");
-        byte[] distLengths = BlockCompressor.ReadAndValidateCodeTable(codedBlock, ref offset, BlockCompressor.MaxDistSymbol, "DIST");
+        byte[] litLengths = CanonicalHuffman.ReadTable(codedBlock, ref offset, FrequencyTable.LitAlphabetSize);
+        byte[] lenLengths = CanonicalHuffman.ReadTable(codedBlock, ref offset, FrequencyTable.LenAlphabetSize);
+        byte[] distLengths = CanonicalHuffman.ReadTable(codedBlock, ref offset, FrequencyTable.DistAlphabetSize);
 
         Assert.Equal(2, litLengths['l']);
         Assert.Equal(3, litLengths[' ']);
