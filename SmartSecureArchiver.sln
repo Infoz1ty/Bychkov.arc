@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartSecureArchiver.Trainin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartSecureArchiver.Zone3Runner", "tools\SmartSecureArchiver.Zone3Runner\SmartSecureArchiver.Zone3Runner.csproj", "{A6DC6A15-F492-4735-A1D7-339A6236E7B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartSecureArchiver.Gui", "src\SmartSecureArchiver.Gui\SmartSecureArchiver.Gui.csproj", "{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,18 @@ Global
 		{A6DC6A15-F492-4735-A1D7-339A6236E7B2}.Release|x64.Build.0 = Release|Any CPU
 		{A6DC6A15-F492-4735-A1D7-339A6236E7B2}.Release|x86.ActiveCfg = Release|Any CPU
 		{A6DC6A15-F492-4735-A1D7-339A6236E7B2}.Release|x86.Build.0 = Release|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Debug|x64.Build.0 = Debug|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Debug|x86.Build.0 = Debug|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Release|x64.ActiveCfg = Release|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Release|x64.Build.0 = Release|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Release|x86.ActiveCfg = Release|Any CPU
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,5 +123,6 @@ Global
 		{56B853DB-C971-476D-8989-FC3B24D7199D} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{4CE10940-5E01-4EF6-8521-2D865AB05A4F} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{A6DC6A15-F492-4735-A1D7-339A6236E7B2} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{6D58A611-7CE2-4C2D-9A0F-EE9FD95EBB85} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
