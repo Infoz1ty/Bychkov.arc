@@ -149,6 +149,44 @@
   * Збірка `dotnet build SmartSecureArchiver.sln` без попереджень і помилок та проходження unit-тестів на еталонних архівах `team/reference/ref_*.arc` із перевіркою `CRC32`.
 >>>>>>> f3f7564a309fc293bee72e07db24c4c6a5679f78
 
+### Запис 7
+* **Дата:** 2026-11-16
+* **Учасник:** Пуш Володимир (зона «Аналіз даних + Пакування»)
+* **Інструмент:** DeepSeek V4.1 Flash (агент OpenCode)
+* **Задача / Промпт:**
+  * Зріз 2, Issues #22–#27: MLP з нуля (архітектура, forward, backprop, навчання, серіалізація), macro-F1 і матриця помилок, вибір стратегії `NO_COMPRESSION`, ДП-рюкзак 0/1 та жадібний алгоритм із Таблицею №3.
+  * Без сторонніх ML-, оптимізаційних та компресійних бібліотек.
+* **Згенерований результат:**
+  * `MlpNetwork` (52 → 64 ReLU → 7 Softmax), `MlpTrainer` (cross-entropy + mini-batch SGD), `FeatureNormalizer`, `MlpModelSerializer`, `ModelMetrics`, `MlpClassifier`.
+  * `KnapsackPacker` (точний ДП `O(n·W)` із відновленням множини та greedy за `v/w`).
+  * Тренувальний інструмент `tools/SmartSecureArchiver.Training` і benchmark `tools/SmartSecureArchiver.Benchmarks`.
+  * Артефакти: `models/mlp_weights.bin`, `reports/classifier_metrics.json`, `reports/table3_knapsack.md`.
+* **Внесені зміни:**
+  * Протокол навчання: 3 ініціалізації (seed 2026–2028), вибір моделі за macro-F1 на `valid/`.
+  * Відновлення рюкзака зроблено через бітові матриці рішень, щоб уникнути повторного вибору одного блоку.
+  * Формула `W` відповідає `AGENTS.md`; вага блока вже містить 15 байтів таблиці блоків.
+  * Стратегія: клас 5 та ентропія ≥ 7.95 → `NO_COMPRESSION`.
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 80/80 тестів.
+  * macro-F1 на `valid/` = 0.9706 при `F1_min = 0.61`.
+  * Таблиця №3 згенерована на реальному `team/corpus` (21 файл, 32 блоки).
+
+### Запис 8
+* **Дата:** 2026-11-16
+* **Учасник:** Учасник 1 (Мітяй Максим)
+* **Інструмент:** Antigravity (Gemini 4 Argon Medium)
+* **Задача / Промпт:**
+  * Реалізація експериментально-бенчмарк частини Зрізу 2 для Зони 1 (Issues `#11`–`#13`, Кейс C1 №9): порівняння жадібного (`Greedy LZ77`) та лінивого (`Lazy Greedy LZ77`) розбору на всіх 7 групах корпусу `team/corpus/` та формування Таблиці №1 у `docs/BENCHMARK_ZONE1.md`.
+* **Згенерований результат:**
+  * Клас автотестів і бенчмарку `Lz77BenchmarkTests.cs` (`tests/SmartSecureArchiver.Tests/Compression/Lz77BenchmarkTests.cs`) та згенерований звіт `docs/BENCHMARK_ZONE1.md` із Таблицею №1 по всіх 21 файлах і зведеною таблицею по 7 групах.
+* **Внесені зміни:**
+  * Додано попередній прогрів JIT та вимірювання мінімального часу з 3 прогонів `Stopwatch` окремо для стиснення і декомпресії.
+  * Додано параметризовані тести `Lz77_SlidingWindowAndMinMatchParameters_RespectGeneticAlgorithmBounds` для перевірки передачі параметрів `(window_size, min_match)` від Генетичного Алгоритму (Issue `#11`).
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln` — 85/85 тестів пройдено успішно, побайтовий збіг (`original == restored`) підтверджено на всьому корпусі.
+
 ---
 
 ## 4. Відповідальність
