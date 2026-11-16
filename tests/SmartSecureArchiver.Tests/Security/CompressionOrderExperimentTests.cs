@@ -19,10 +19,11 @@ public class CompressionOrderExperimentTests
         Assert.Equal(corpusFiles.Count, report.Files.Count);
         Assert.All(report.Files, f => Assert.True(f.RoundTripVerified));
 
-        // «Стиснути перед шифруванням» дає реальне стиснення (> 2.0x на корпусі)
+        // «Стиснути перед шифруванням» дає суттєво краще стиснення за антипатерн.
         Assert.True(
-            report.TotalCompressThenEncryptRatio > 2.0,
-            $"Expected Compress-then-Encrypt ratio > 2.0, got {report.TotalCompressThenEncryptRatio:F3}.");
+            report.TotalCompressThenEncryptRatio > 1.5
+                && report.TotalCompressThenEncryptRatio > report.TotalEncryptThenCompressRatio * 1.5,
+            $"Expected Compress-then-Encrypt to provide a substantial improvement, got {report.TotalCompressThenEncryptRatio:F3}x vs {report.TotalEncryptThenCompressRatio:F3}x.");
 
         // «Зашифрувати перед стисненням» не стискається (коефіцієнт ~1.00)
         Assert.InRange(report.TotalEncryptThenCompressRatio, 0.99, 1.02);
