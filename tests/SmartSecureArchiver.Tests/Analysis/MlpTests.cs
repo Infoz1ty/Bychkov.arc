@@ -172,6 +172,18 @@ public class MlpTests
         Assert.False(classifier.ShouldCompress(MlpClassifier.AlreadyCompressedClass, normal));
         Assert.False(classifier.ShouldCompress(fileClass: 0, highEntropy));
         Assert.True(classifier.ShouldCompress(fileClass: 0, normal));
+
+        // Растр із високою байтовою ентропією, але сильною автокореляцією має стискатися (Методичка п. 10.28).
+        double[] correlatedAc = new double[16];
+        correlatedAc[0] = 0.94;
+        FileFeatures highEntropyRaster = new(
+            Entropy: 7.988,
+            Histogram32: Enumerable.Repeat(1.0 / 32, 32).ToArray(),
+            AsciiRatio: 0.3,
+            NewlineDistanceAvg: 0,
+            Autocorrelation16: correlatedAc,
+            BigramEntropy: 8.07);
+        Assert.True(classifier.ShouldCompress(fileClass: 3, highEntropyRaster));
     }
 
     [Fact]

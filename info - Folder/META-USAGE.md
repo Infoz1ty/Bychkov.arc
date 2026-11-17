@@ -221,6 +221,24 @@
   * `dotnet build SmartSecureArchiver.sln` — 0 помилок, 0 попереджень.
   * `dotnet test SmartSecureArchiver.sln` — 124/124 тестів пройдено.
 
+### Запис 12
+* **Дата:** 2026-11-17
+* **Учасник:** Учасники команди (спільний аудит і доопрацювання репозиторію)
+* **Інструмент:** Antigravity
+* **Задача / Промпт:**
+  * Перевірка репозиторію на відповідність `Проєкт 2.md`, `FORMAT_SPEC_P2_2.md` і `Методичка draft.md`, виправлення виявлених помилок, перенавчання MLP на точних LF-байтах корпусу, реалізація Таблиці №2 (Ablation Study) та актуалізація документації перед написанням звіту.
+* **Згенерований результат:**
+  * Модуль `AblationStudyRunner` (`src/SmartSecureArchiver.Core/Format/AblationStudyRunner.cs`), підкоманда `ablation` у CLI, звіти `reports/table2_ablation.md`, `reports/ablation_results.json`, `reports/table3_knapsack.md`, оновлені `models/mlp_weights.bin`, `reports/classifier_metrics.json`, `reports/table4_encrypt_vs_compress.md`, `reports/table5_ga_vs_random.md`, `reports/ga_evolution_log.json`, `reports/attack_and_tamper_report.md` та `docs/BENCHMARK_ZONE1.md`.
+* **Внесені зміни:**
+  * Додано правило `team/** -text` у `.gitattributes` і відновлено `team/` з `HEAD` (повернено `LF`, сумарний розмір `team/corpus/` `329903` байт); перенавчено MLP (`valid macro-F1 = 0.9706`).
+  * Виправлено `MlpClassifier.ShouldCompress` (`п. 10.28` Методички): високоентропійні блоки не пропускаються за наявності сильної локальної автокореляції (`max |AC| >= 0.5`), що усунуло пропуск стиснення для `.pgm` (розмір архіву базової системи зменшився до `131185` Б, `Q = 0.7987` у `reports/table2_ablation.md`).
+  * Виключено `labels.csv` у CLI `benchmark`/`ablation`, додано автоматичне збереження `reports/table3_knapsack.md` і `reports/table2_ablation.md` у `Benchmarks`, переведено `FormatContractTests` зі стаба на `ArchiveOrchestrator` (у т.ч. `ref_01`..`ref_06`, `bad_01`..`bad_06`, граничні кейси C2), виправлено підрахунок розміру і висновки в `Lz77BenchmarkTests`.
+  * Додано `<RollForward>LatestMajor</RollForward>` у `SmartSecureArchiver.Gui.csproj`, `-warnaserror` та збір Cobertura-покриття у `.github/workflows/ci.yml`, оновлено `README.md` (запуск WPF GUI, CLI, відтворення експериментів та «Відомі обмеження»).
+* **Метод верифікації:**
+  * `dotnet build SmartSecureArchiver.sln --configuration Release -warnaserror` — 0 помилок, 0 попереджень.
+  * `dotnet test SmartSecureArchiver.sln --no-build --configuration Release` — 131/131 тестів пройдено (`SmartSecureArchiver.Core`: `84.90%` рядків, `83.19%` гілок).
+  * Повторна генерація всіх звітів (`Zone3Runner`, `Benchmarks`, `Lz77BenchmarkTests`, `Cli benchmark`, `Cli ablation`) на 21 файлі (`329903` байт) із перевіркою `original == restored`.
+
 ---
 
 ## 4. Відповідальність

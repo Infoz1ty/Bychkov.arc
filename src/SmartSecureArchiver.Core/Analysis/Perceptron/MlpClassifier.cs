@@ -51,7 +51,15 @@ public sealed class MlpClassifier : IFileClassifier
             return false;
         }
 
-        return features.Entropy < noCompressionEntropyThreshold;
+        if (features.Entropy < noCompressionEntropyThreshold)
+        {
+            return true;
+        }
+
+        // Методичка п. 10.28: растрові дані (клас 3) можуть мати високу 1-байтову ентропію (~7.98),
+        // але сильну локальну автокореляцію сусідніх байтів і чудово стискатися LZ77.
+        bool hasStrongLocalCorrelation = features.Autocorrelation16.Any(ac => Math.Abs(ac) >= 0.5);
+        return hasStrongLocalCorrelation;
     }
 
     public static MlpClassifier Load(string path)

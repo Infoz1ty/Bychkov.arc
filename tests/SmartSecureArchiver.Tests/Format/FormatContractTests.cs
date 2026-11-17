@@ -298,28 +298,79 @@ public class FormatContractTests
     }
 
     [Theory]
-    [InlineData("ref_02_empty_file.arc", "empty.dat", 0u, 0x00000000u)]
-    [InlineData("ref_05_no_compression.arc", "packed.z", 12000u, 0x369BB1DDu)]
-    public void ReferenceArchives_EmptyAndNoCompression_ExtractEndToEndWithExactCrc32(
+    [InlineData("ref_01_single_file.arc", "ref_01_single_file.json")]
+    [InlineData("ref_02_empty_file.arc", "ref_02_empty_file.json")]
+    [InlineData("ref_03_degenerate.arc", "ref_03_degenerate.json")]
+    [InlineData("ref_04_seven_groups.arc", "ref_04_seven_groups.json")]
+    [InlineData("ref_05_no_compression.arc", "ref_05_no_compression.json")]
+    [InlineData("ref_06_two_volumes.part2.arc", "ref_06_two_volumes.json")]
+    public void ReferenceAllArchives_ExtractEndToEndWithExactSizesAndCrc32(
         string archiveName,
-        string expectedFileName,
-        uint expectedSize,
-        uint expectedCrc32)
+        string manifestJsonName)
     {
         string archivePath = FindRepoFile(Path.Combine("team", "reference", archiveName));
-        string tempOutDir = Path.Combine(Path.GetTempPath(), $"sarc_ref_test_{Guid.NewGuid():N}");
+        string jsonPath = FindRepoFile(Path.Combine("team", "reference", manifestJsonName));
+        string tempOutDir = Path.Combine(Path.GetTempPath(), $"sarc_ref_all_{Guid.NewGuid():N}");
 
         try
         {
             var orchestrator = new ArchiveOrchestrator();
             orchestrator.ExtractArchive(archivePath, tempOutDir, "algo2026");
 
-            string restoredFilePath = Path.Combine(tempOutDir, expectedFileName);
-            Assert.True(File.Exists(restoredFilePath));
+            using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
+            JsonElement contents = doc.RootElement.GetProperty("вміст");
 
-            byte[] restoredBytes = File.ReadAllBytes(restoredFilePath);
-            Assert.Equal((int)expectedSize, restoredBytes.Length);
-            Assert.Equal(expectedCrc32, _crypto.ComputeCrc32(restoredBytes));
+            int expectedCount = 0;
+            foreach (JsonProperty entry in contents.EnumerateObject())
+            {
+                expectedCount++;
+                string fileName = entry.Name;
+                int expectedSize = entry.Value.GetProperty("розмір").GetInt32();
+                uint expectedCrc = Convert.ToUInt32(entry.Value.GetProperty("crc32").GetString()!, 16);
+
+                string restoredPath = Path.Combine(tempOutDir, fileName);
+                Assert.True(File.Exists(restoredPath), $"Missing extracted file: {fileName}");
+
+                byte[] restoredBytes = File.ReadAllBytes(restoredPath);
+                Assert.Equal(expectedSize, restoredBytes.Length);
+                Assert.Equal(expectedCrc, _crypto.ComputeCrc32(restoredBytes));
+            }
+
+            Assert.Equal(expectedCount, Directory.GetFiles(tempOutDir).Length);
+        }
+        finally
+        {
+            if (Directory.Exists(tempOutDir))
+            {
+                Directory.Delete(tempOutDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void ReferenceMultiVolume06_ReverseOrder_ExtractsExactFilesAndCrc32()
+    {
+        string[] reversedParts =
+        [
+            FindRepoFile(Path.Combine("team", "reference", "ref_06_two_volumes.part2.arc")),
+            FindRepoFile(Path.Combine("team", "reference", "ref_06_two_volumes.part0.arc")),
+            FindRepoFile(Path.Combine("team", "reference", "ref_06_two_volumes.part1.arc"))
+        ];
+        string jsonPath = FindRepoFile(Path.Combine("team", "reference", "ref_06_two_volumes.json"));
+        string tempOutDir = Path.Combine(Path.GetTempPath(), $"sarc_ref06_rev_{Guid.NewGuid():N}");
+
+        try
+        {
+            var orchestrator = new ArchiveOrchestrator();
+            orchestrator.ExtractArchive(reversedParts, tempOutDir, "algo2026");
+
+            using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
+            foreach (JsonProperty entry in doc.RootElement.GetProperty("вміст").EnumerateObject())
+            {
+                byte[] restoredBytes = File.ReadAllBytes(Path.Combine(tempOutDir, entry.Name));
+                Assert.Equal(entry.Value.GetProperty("розмір").GetInt32(), restoredBytes.Length);
+                Assert.Equal(Convert.ToUInt32(entry.Value.GetProperty("crc32").GetString()!, 16), _crypto.ComputeCrc32(restoredBytes));
+            }
         }
         finally
         {
@@ -336,7 +387,7 @@ public class FormatContractTests
         string jsonPath = FindRepoFile(Path.Combine("team", "reference", "expected_failures.json"));
         using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
 
-        var orchestrator = new ArchiveOrchestrator(blockCompressor: new ControlExampleBlockCompressorStub());
+        var orchestrator = new ArchiveOrchestrator();
         string tempOutDir = Path.Combine(Path.GetTempPath(), $"sarc_bad_test_{Guid.NewGuid():N}");
 
         try
@@ -449,7 +500,7 @@ public class FormatContractTests
             File.WriteAllBytes(existingFilePath, originalSafeContent);
 
             string badCrcArchive = FindRepoFile(Path.Combine("team", "reference", "bad_06_bad_crc.arc"));
-            var orchestrator = new ArchiveOrchestrator(blockCompressor: new ControlExampleBlockCompressorStub());
+            var orchestrator = new ArchiveOrchestrator();
 
             var ex = Assert.Throws<SarcException>(() =>
                 orchestrator.ExtractArchive([badCrcArchive], tempOutDir, "algo2026"));
@@ -477,32 +528,77 @@ public class FormatContractTests
         Assert.Equal(SarcErrorCode.E_CAPACITY, ex.ErrorCode);
     }
 
-    /// <summary>
-    /// Тестова заглушка IBlockCompressor для перевірки E_CRC на контрольному прикладі (480B "hello world " * 40),
-    /// поки Учасник 1 не підключив свої класи IHuffmanCodec та ILz77Parser.
-    /// </summary>
-    private sealed class ControlExampleBlockCompressorStub : IBlockCompressor
+    [Fact]
+    public void ArchiveOrchestrator_EmptyArchiveAndMissingInputAndSmallFiles_HandledCleanly_C2()
     {
-        private readonly BlockCompressor _inner = new();
+        string tempDir = Path.Combine(Path.GetTempPath(), $"sarc_c2_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
 
-        public byte[] Compress(
-            ReadOnlySpan<byte> blockData,
-            out byte blockFlags,
-            bool allowCompression = true,
-            int windowSize = 32768,
-            int minMatchLength = 3,
-            bool useLazyMatching = false) =>
-            _inner.Compress(blockData, out blockFlags, allowCompression, windowSize, minMatchLength, useLazyMatching);
-
-        public byte[] Decompress(ReadOnlySpan<byte> codedData, byte blockFlags, int expectedRawLength)
+        try
         {
-            if ((blockFlags & FileBlock.NoCompressionFlag) != 0)
-            {
-                return _inner.Decompress(codedData, blockFlags, expectedRawLength);
-            }
+            ArchiveOrchestrator orchestrator = ArchiveOrchestratorFactory.CreateDefault();
 
-            return new byte[expectedRawLength];
+            // C2.2: Порожній архів (0 файлів, 0 блоків -> 1 валідний том)
+            string emptyArc = Path.Combine(tempDir, "empty_archive.arc");
+            IReadOnlyList<string> emptyVolumes = orchestrator.CreateArchive([], emptyArc, "algo2026", 65536);
+            Assert.Single(emptyVolumes);
+            string emptyOut = Path.Combine(tempDir, "empty_out");
+            orchestrator.ExtractArchive(emptyVolumes, emptyOut, "algo2026");
+            Assert.True(Directory.Exists(emptyOut));
+            Assert.Empty(Directory.GetFiles(emptyOut));
+
+            // C2.1: Відсутній вхідний файл -> FileNotFoundException без створення часткового архіву
+            string missingArc = Path.Combine(tempDir, "missing.arc");
+            Assert.Throws<FileNotFoundException>(() =>
+                orchestrator.CreateArchive([Path.Combine(tempDir, "does_not_exist.txt")], missingArc, "algo2026", 65536));
+            Assert.False(File.Exists(missingArc));
+
+            // C2.2: Файли менші за MIN_MATCH=3 (1 та 2 байти)
+            string f1 = Path.Combine(tempDir, "one.bin");
+            string f2 = Path.Combine(tempDir, "two.bin");
+            File.WriteAllBytes(f1, [0x7F]);
+            File.WriteAllBytes(f2, [0x10, 0x20]);
+
+            string smallArc = Path.Combine(tempDir, "small.arc");
+            IReadOnlyList<string> smallVolumes = orchestrator.CreateArchive([f1, f2], smallArc, "algo2026", 65536);
+            string smallOut = Path.Combine(tempDir, "small_out");
+            orchestrator.ExtractArchive(smallVolumes, smallOut, "algo2026");
+
+            Assert.Equal([0x7F], File.ReadAllBytes(Path.Combine(smallOut, "one.bin")));
+            Assert.Equal([0x10, 0x20], File.ReadAllBytes(Path.Combine(smallOut, "two.bin")));
         }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void AblationStudyRunner_AllVariantsRemainByteExactAndProduceTable2()
+    {
+        string corpusDir = Path.GetDirectoryName(FindRepoFile(Path.Combine("team", "corpus", "f0000.txt")))!;
+        IReadOnlyList<string> sampleFiles =
+        [
+            Path.Combine(corpusDir, "f0000.txt"),
+            Path.Combine(corpusDir, "f0001.py"),
+            Path.Combine(corpusDir, "f0005.z")
+        ];
+
+        AblationStudyReport report = AblationStudyRunner.Run(sampleFiles, runsPerVariant: 1);
+
+        Assert.True(report.Variants.Count >= 7);
+        Assert.All(report.Variants, v =>
+        {
+            Assert.True(v.IsByteExact, $"Variant {v.VariantId} was not byte-exact.");
+            Assert.True(v.TotalScoreQ > 0.0, $"Variant {v.VariantId} produced Q=0.");
+        });
+
+        string md = AblationStudyRunner.FormatMarkdownTable(report);
+        Assert.Contains("Таблиця №2", md);
+        Assert.Contains("NO_COMPRESSION", md);
     }
 
     private static string FindRepoFile(string relativePath)

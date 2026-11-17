@@ -24,7 +24,14 @@ jobs:
       run: dotnet restore SmartSecureArchiver.sln
 
     - name: Build Solution
-      run: dotnet build SmartSecureArchiver.sln --no-restore --configuration Release
+      run: dotnet build SmartSecureArchiver.sln --no-restore --configuration Release -warnaserror
 
-    - name: Run Tests
-      run: dotnet test SmartSecureArchiver.sln --no-build --configuration Release --verbosity normal
+    - name: Run Tests with Coverage
+      run: dotnet test SmartSecureArchiver.sln --no-build --configuration Release --verbosity normal --collect:"Code Coverage;Format=cobertura" --results-directory ./TestResults
+
+    - name: Upload Coverage Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-coverage
+        path: TestResults/**/*.cobertura.xml

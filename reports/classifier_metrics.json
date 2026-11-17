@@ -9,8 +9,8 @@
       "seed": 2026,
       "valid_macro_f1": 0.9510204081632653,
       "valid_accuracy": 0.9523809523809523,
-      "initial_loss": 0.8606509035673031,
-      "final_loss": 0.045411552406431584,
+      "initial_loss": 0.8994956433819882,
+      "final_loss": 0.04540789530101067,
       "confusion_matrix": [
         [
           15,
@@ -81,8 +81,8 @@
       "seed": 2027,
       "valid_macro_f1": 0.9604266701040894,
       "valid_accuracy": 0.9619047619047619,
-      "initial_loss": 0.9922787290704931,
-      "final_loss": 0.05034262000695129,
+      "initial_loss": 1.0125936441050611,
+      "final_loss": 0.050328632403792734,
       "confusion_matrix": [
         [
           15,
@@ -153,8 +153,8 @@
       "seed": 2028,
       "valid_macro_f1": 0.9705901177675372,
       "valid_accuracy": 0.9714285714285714,
-      "initial_loss": 0.8323801335424252,
-      "final_loss": 0.04192565067368972,
+      "initial_loss": 0.8476107718425172,
+      "final_loss": 0.0414861076043989,
       "confusion_matrix": [
         [
           15,

@@ -1,16 +1,18 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
+using System.Text.Json;
 using SmartSecureArchiver.Core.Compression;
 using SmartSecureArchiver.Core.Format;
+using SmartSecureArchiver.Core.Optimization;
 using SmartSecureArchiver.Core.Packing;
 using SmartSecureArchiver.Core.Security;
 
 namespace SmartSecureArchiver.Benchmarks;
 
 /// <summary>
-/// Генерує Таблицю №3 звіту (Issue #27): порівняння ДП-рюкзака 0/1 та жадібного алгоритму
-/// на першому томі, зібраному з реальних блоків team/corpus.
-/// team/ відкривається лише для читання.
+/// Генерує Таблицю №2 (Issue #47, Ablation Study) та Таблицю №3 звіту (Issue #27, ДП-рюкзак 0/1 проти жадібного)
+/// на реальному корпусі team/corpus (відкривається лише для читання).
 /// </summary>
 public static class Program
 {
@@ -22,9 +24,13 @@ public static class Program
 
     public static int Main(string[] args)
     {
+        Console.OutputEncoding = Encoding.UTF8;
+
         string repositoryRoot = FindRepositoryRoot();
         string corpusDirectory = Path.Combine(repositoryRoot, "team", "corpus");
         string labelsPath = Path.Combine(corpusDirectory, "labels.csv");
+        string reportsDir = Path.Combine(repositoryRoot, "reports");
+        Directory.CreateDirectory(reportsDir);
 
         if (!File.Exists(labelsPath))
         {
@@ -34,6 +40,7 @@ public static class Program
 
         Dictionary<string, byte> labels = ReadLabels(labelsPath);
         var files = new List<ArchiveFileInfo>();
+        var corpusPaths = new List<string>();
         var candidates = new List<BlockCandidate>();
         var compressor = new BlockCompressor();
         var crypto = new CryptoEngine();
@@ -48,6 +55,7 @@ public static class Program
                 continue;
             }
 
+            corpusPaths.Add(path);
             byte[] data = File.ReadAllBytes(path);
             var fileIndex = (ushort)files.Count;
             files.Add(new ArchiveFileInfo(fileName, (uint)data.Length, crypto.ComputeCrc32(data), fileType));
@@ -84,25 +92,79 @@ public static class Program
         (PackingResult dp, double dpMs) = Measure(() => packer.PackVolumeDp(plan.UsableBlockCapacity, candidates));
         (PackingResult greedy, double greedyMs) = Measure(() => packer.PackVolumeGreedy(plan.UsableBlockCapacity, candidates));
 
-        Console.WriteLine("# Таблиця №3 — ДП-рюкзак 0/1 проти жадібного алгоритму (перший том)");
-        Console.WriteLine();
-        Console.WriteLine($"- Файлів у корпусі: {files.Count}");
-        Console.WriteLine($"- Блоків-кандидатів: {candidates.Count}");
-        Console.WriteLine($"- Розмір тому: {MaxVolumeBytes} байт");
-        Console.WriteLine($"- Таблиця файлів: {plan.FileTableSize} байт");
-        Console.WriteLine($"- Чиста місткість W: {plan.UsableBlockCapacity} байт");
-        Console.WriteLine();
-        Console.WriteLine("| Показник | ДП 0/1 | Жадібний |");
-        Console.WriteLine("|---|---:|---:|");
-        Console.WriteLine($"| Сумарна цінність | {dp.TotalValue} | {greedy.TotalValue} |");
-        Console.WriteLine($"| Сумарна вага, байт | {dp.TotalWeight} | {greedy.TotalWeight} |");
-        Console.WriteLine($"| Кількість блоків | {dp.SelectedBlocks.Count} | {greedy.SelectedBlocks.Count} |");
-        Console.WriteLine($"| Час, мс (мінімум із 3 прогонів) | {dpMs.ToString("F3", CultureInfo.InvariantCulture)} | {greedyMs.ToString("F3", CultureInfo.InvariantCulture)} |");
-        Console.WriteLine($"| Різниця цінності (ДП − greedy) | {dp.TotalValue - greedy.TotalValue} | — |");
-        Console.WriteLine($"| Різниця ваги (ДП − greedy), байт | {dp.TotalWeight - greedy.TotalWeight} | — |");
+        var table3Sb = new StringBuilder();
+        table3Sb.AppendLine("# Таблиця №3 — ДП-рюкзак 0/1 проти жадібного алгоритму (перший том)");
+        table3Sb.AppendLine();
+        table3Sb.AppendLine($"- Файлів у корпусі: {files.Count}");
+        table3Sb.AppendLine($"- Блоків-кандидатів: {candidates.Count}");
+        table3Sb.AppendLine($"- Розмір тому: {MaxVolumeBytes} байт");
+        table3Sb.AppendLine($"- Таблиця файлів: {plan.FileTableSize} байт");
+        table3Sb.AppendLine($"- Чиста місткість W: {plan.UsableBlockCapacity} байт");
+        table3Sb.AppendLine();
+        table3Sb.AppendLine("| Показник | ДП 0/1 | Жадібний |");
+        table3Sb.AppendLine("|---|---:|---:|");
+        table3Sb.AppendLine($"| Сумарна цінність | {dp.TotalValue} | {greedy.TotalValue} |");
+        table3Sb.AppendLine($"| Сумарна вага, байт | {dp.TotalWeight} | {greedy.TotalWeight} |");
+        table3Sb.AppendLine($"| Кількість блоків | {dp.SelectedBlocks.Count} | {greedy.SelectedBlocks.Count} |");
+        table3Sb.AppendLine($"| Час, мс (мінімум із 3 прогонів) | {dpMs.ToString("F3", CultureInfo.InvariantCulture)} | {greedyMs.ToString("F3", CultureInfo.InvariantCulture)} |");
+        table3Sb.AppendLine($"| Різниця цінності (ДП − greedy) | {dp.TotalValue - greedy.TotalValue} | — |");
+        table3Sb.AppendLine($"| Різниця ваги (ДП − greedy), байт | {dp.TotalWeight - greedy.TotalWeight} | — |");
+
+        string table3Content = table3Sb.ToString();
+        string table3Path = Path.Combine(reportsDir, "table3_knapsack.md");
+        File.WriteAllText(table3Path, table3Content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        Console.WriteLine(table3Content);
+        Console.WriteLine($"-> Збережено {table3Path}");
         Console.WriteLine();
 
-        return 0;
+        // Генерація Таблиці №2 (Ablation Study, Issue #47)
+        corpusPaths.Sort(StringComparer.Ordinal);
+        GeneticParameters? gaParams = TryLoadBestGaParameters(Path.Combine(reportsDir, "ga_evolution_log.json"));
+        AblationStudyReport ablationReport = AblationStudyRunner.Run(
+            corpusPaths,
+            password: "algo2026",
+            maxVolumeBytes: MaxVolumeBytes,
+            blockSize: BlockSize,
+            alpha: QualityMetricCalculator.DefaultAlpha,
+            beta: QualityMetricCalculator.DefaultBeta,
+            referenceSeconds: QualityMetricCalculator.DefaultReferenceSeconds,
+            runsPerVariant: 3,
+            gaOptimizedParameters: gaParams);
+
+        string table2Path = Path.Combine(reportsDir, "table2_ablation.md");
+        string table2JsonPath = Path.Combine(reportsDir, "ablation_results.json");
+        AblationStudyRunner.SaveReport(table2Path, table2JsonPath, ablationReport);
+        Console.WriteLine(AblationStudyRunner.FormatMarkdownTable(ablationReport));
+        Console.WriteLine($"-> Збережено {table2Path} та {table2JsonPath}");
+
+        return ablationReport.Variants.All(v => v.IsByteExact) ? 0 : 1;
+    }
+
+    private static GeneticParameters? TryLoadBestGaParameters(string gaLogPath)
+    {
+        if (!File.Exists(gaLogPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(gaLogPath));
+            if (!doc.RootElement.TryGetProperty("genetic_algorithm", out JsonElement gaEl) ||
+                !gaEl.TryGetProperty("BestParameters", out JsonElement bestEl))
+            {
+                return null;
+            }
+
+            int windowSize = bestEl.GetProperty("WindowSize").GetInt32();
+            int minMatch = bestEl.GetProperty("MinMatchLength").GetInt32();
+            double threshold = bestEl.GetProperty("NoCompressionEntropyThreshold").GetDouble();
+            return new GeneticParameters(windowSize, minMatch, threshold);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static (PackingResult Result, double Milliseconds) Measure(Func<PackingResult> action)
