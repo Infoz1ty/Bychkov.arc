@@ -251,12 +251,13 @@ public class Lz77BenchmarkTests
         var sb = new StringBuilder();
         CultureInfo inv = CultureInfo.InvariantCulture;
 
+        int totalOriginalBytes = rows.Sum(r => r.OriginalSize);
         sb.AppendLine("# Звіт Зони 1 (Зріз 2): Порівняння Greedy LZ77 проти Lazy Greedy LZ77 (Issues #11–#13)");
         sb.AppendLine();
         sb.AppendLine("## 1. Параметри експерименту");
         sb.AppendLine("- **Модуль:** `SmartSecureArchiver.Core.Compression` (`Lz77Parser`, `HuffmanCodec`, `BlockCompressor`)");
         sb.AppendLine("- **Параметри формату SARC v1:** вікно `window_size = 32768` байт, `MIN_MATCH = 3`, `MAX_MATCH = 258`, канонічний Гаффман із 3 деревами (`LIT`, `LEN`, `DIST`, коди $\\le 15$ біт, MSB-first).");
-        sb.AppendLine("- **Корпус:** `team/corpus/` (21 файл, 7 груп типів файлів `0..6`, сумарний розмір 329 903 байти).");
+        sb.AppendLine(string.Format(inv, "- **Корпус:** `team/corpus/` ({0} файл, 7 груп типів файлів `0..6`, сумарний розмір {1} байти).", rows.Count, totalOriginalBytes));
         sb.AppendLine("- **Методика вимірювання часу:** `System.Diagnostics.Stopwatch` (мінімальний час із 3 прогонів після попереднього прогріву JIT, окремо час стиснення + розпакування).");
         sb.AppendLine("- **Контроль коректності:** для кожного файлу в обох режимах перевірено побайтовий збіг після декомпресії (`original == restored`).");
         sb.AppendLine();
@@ -294,6 +295,7 @@ public class Lz77BenchmarkTests
                 lazyRatio);
 
             string conclusion;
+            double speedRatio = lazyTotalMs / Math.Max(0.001, greedyTotalMs);
             if (r.GreedyFlags == BlockCompressor.FlagNoCompression && r.LazyFlags == BlockCompressor.FlagNoCompression)
             {
                 conclusion = "`NO_COMPRESSION` (0 Б різниці; обидва режими зберегли сирі байти без втрат)";
@@ -301,15 +303,19 @@ public class Lz77BenchmarkTests
             else if (diffBytes < 0)
             {
                 double savedPct = -100.0 * diffBytes / r.GreedySize;
-                conclusion = string.Format(inv, "Lazy кращий на **{0} Б** (-{1:F2}%), повільніший у {2:F2}x", -diffBytes, savedPct, lazyTotalMs / Math.Max(0.001, greedyTotalMs));
+                string timeNote = speedRatio >= 1.0
+                    ? string.Format(inv, "повільніший у {0:F2}x", speedRatio)
+                    : string.Format(inv, "швидший у {0:F2}x", 1.0 / Math.Max(0.001, speedRatio));
+                conclusion = string.Format(inv, "Lazy кращий на **{0} Б** (-{1:F2}%), {2}", -diffBytes, savedPct, timeNote);
             }
             else if (diffBytes == 0)
             {
-                conclusion = "Однаковий розмір (0 Б різниці); Greedy швидший";
+                string faster = greedyTotalMs <= lazyTotalMs ? "Greedy швидший" : "Lazy швидший";
+                conclusion = $"Однаковий розмір (0 Б різниці); {faster}";
             }
             else
             {
-                conclusion = string.Format(inv, "Greedy кращий на **{0} Б** та швидший", diffBytes);
+                conclusion = string.Format(inv, "Greedy кращий на **{0} Б**", diffBytes);
             }
 
             sb.AppendLine($"| {r.GroupName} | `{r.FileName}` | {r.OriginalSize} | {greedyCell} | {lazyCell} | {conclusion} |");

@@ -1,4 +1,4 @@
-﻿team/corpus/** linguist-vendored
-team/train/**
-    linguist-vendored
+﻿team/** -text
+team/corpus/** linguist-vendored
+team/train/** linguist-vendored
 team/valid/** linguist-vendored

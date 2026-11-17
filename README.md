@@ -67,34 +67,87 @@
 
 ## Вимоги до середовища
 
-* [.NET SDK 8.0](https://dotnet.microsoft.com/) або новіший.
-* Підтримувані платформи: Windows / Linux / macOS.
+* [.NET SDK 8.0](https://dotnet.microsoft.com/) або новіший (для GUI у конфігурації проєкту увімкнено `LatestMajor` roll-forward на випадок запуску в середовищі з новішою версією .NET Desktop Runtime).
+* Підтримувані платформи:
+  * **Windows / Linux / macOS** — бібліотека `SmartSecureArchiver.Core`, консольна утиліта `Cli`, модульні/інтеграційні тести та інструменти відтворення експериментів;
+  * **Windows** — графічний інтерфейс WPF (`SmartSecureArchiver.Gui`, цільова платформа `net8.0-windows`).
 
 ---
 
 ## Збірка, тестування та запуск
 
-Збірка рішення:
+### 1. Збірка рішення
 ```shell
-dotnet build SmartSecureArchiver.sln
+dotnet build SmartSecureArchiver.sln --configuration Release -warnaserror
 ```
 
-Запуск усіх автоматичних тестів однією командою:
+### 2. Запуск усіх автоматичних тестів
 ```shell
-dotnet test SmartSecureArchiver.sln
+dotnet test SmartSecureArchiver.sln --configuration Release
 ```
+Набір тестів перевіряє алгоритмічні модулі (LZ77, канонічний Гаффман, CRC32, вилучення ознак, MLP-класифікатор, ДП-рюкзак 0/1, AES-256-CTR, HMAC-SHA256, ГА, криптоатаки на слабкі шифри), витривалість на граничних випадках, цілісність формату `SARC v1`, побайтове розпакування контрольних та дефектних архівів із `team/reference/`, а також Ablation Study.
 
-Використання консольної утиліти (`SmartSecureArchiver.Cli`):
+### 3. Графічний інтерфейс (WPF GUI)
 ```shell
-# 1. Архівування файлів
+dotnet run --project src/SmartSecureArchiver.Gui
+```
+Інтерфейс дозволяє вибирати вхідні файли/каталоги або окремі томи `.arc`, задавати пароль (із перемикачем видимості), керувати опцією стиснення (`СТИСНЕННЯ`), відстежувати прогрес виконання та переглядати локалізовані повідомлення про всі помилки формату й автентифікації (`SarcErrorCode`).
+
+### 4. Консольна утиліта (`SmartSecureArchiver.Cli`)
+```shell
+# 1. Архівування файлів або каталогу (із підтримкою багатотомності)
 dotnet run --project src/SmartSecureArchiver.Cli -- archive -i file1.txt file2.bin -o archive.arc -p "algo2026"
 
 # 2. Розархівування (підтримує один або декілька томів у будь-якому порядку)
-dotnet run --project src/SmartSecureArchiver.Cli -- extract -a archive.arc -o ./restored/ -p "algo2026"
+dotnet run --project src/SmartSecureArchiver.Cli -- extract -a archive.part1.arc archive.part2.arc -o ./restored/ -p "algo2026"
+
+# 3. Оцінка метрики якості Q = α·S + β·T на корпусі
+dotnet run --project src/SmartSecureArchiver.Cli -- benchmark -i team/corpus -c team/team_config.json
+
+# 4. Повний Ablation Study (Таблиця №2) зі збереженням Markdown-звіту
+dotnet run --project src/SmartSecureArchiver.Cli -- ablation -i team/corpus -c team/team_config.json -o reports/table2_ablation.md
 ```
 
 ### Параметри командного рядка
-* `-i, --input` — список вхідних файлів для додавання в архів.
-* `-o, --output` — шлях до вихідного архіву (`.arc`) або каталог для розпакування.
-* `-p, --password` — пароль для генерації ключів шифрування ($K_{\text{enc}}$) та автентифікації ($K_{\text{mac}}$).
-* `-a, --archive` — шлях (або перелік шляхів до томів) архіву для розпакування.
+* `-i, --input` — перелік вхідних файлів або каталогу для архівування / оцінювання (для `benchmark` і `ablation` службовий маніфест `labels.csv` автоматично виключається).
+* `-o, --output` — шлях до вихідного архіву (`.arc`), каталогу для розпакування або Markdown-звіту (для `ablation`).
+* `-p, --password` — пароль для генерації окремих 256-бітових ключів $K_{\text{enc}}$ і $K_{\text{mac}}$ через `PBKDF2-HMAC-SHA256` (100 000 ітерацій).
+* `-a, --archive` — шлях до одного або кількох томів `.arc` (у довільному порядку).
+* `-m, --max-volume` — максимальний розмір одного тому в байтах (за замовчуванням береться з `team/team_config.json` — `65536`).
+* `-b, --block-size` — розмір блока даних перед стисненням (за замовчуванням `16384`).
+* `-c, --config` — шлях до JSON-конфігурації (наприклад, `team/team_config.json`).
+
+---
+
+## Відтворення експериментів та структура даних
+
+### Дані та результати
+* `team/` — фіксований командний корпус (`team/corpus/`, 21 файл, 329 903 байти у форматі `LF`), вибірка для навчання/валідації MLP (`team/train/`), еталонні й пошкоджені архіви (`team/reference/`) та конфігурація `team/team_config.json` (seed `2001`). Правила `.gitattributes` фіксують `team/** -text`, щоб уникнути перетворення `LF` у `CRLF` на Windows.
+* `models/mlp_weights.bin` — бінарні ваги та параметри Z-стандартизації навченої моделі MLP.
+* `docs/BENCHMARK_ZONE1.md` — **Таблиця №1** (Greedy LZ77 проти Lazy Greedy LZ77 по 21 файлу та 7 групах).
+* `reports/` — **Таблиця №2** (`table2_ablation.md`, `ablation_results.json`), **Таблиця №3** (`table3_knapsack.md`), **Таблиця №4** (`table4_encrypt_vs_compress.md`), **Таблиця №5** (`table5_ga_vs_random.md`, `ga_evolution_log.json`), метрики класифікатора (`classifier_metrics.json`) та звіт криптоатак/аудиту цілісності (`attack_and_tamper_report.md`).
+
+### Команди відтворення звітів
+```shell
+# Навчання та оцінювання MLP-класифікатора (оновлює models/mlp_weights.bin і reports/classifier_metrics.json)
+dotnet run --project tools/SmartSecureArchiver.Training --configuration Release
+
+# Таблиця №1 (docs/BENCHMARK_ZONE1.md — порівняння Greedy і Lazy Greedy LZ77)
+# PowerShell: $env:SARC_UPDATE_BENCHMARK="1"; dotnet test SmartSecureArchiver.sln --configuration Release --filter Lz77BenchmarkTests
+SARC_UPDATE_BENCHMARK=1 dotnet test SmartSecureArchiver.sln --configuration Release --filter Lz77BenchmarkTests
+
+# Звіти Зони 3: Таблиця №4, Таблиця №5 (ГА vs Random Search), ga_evolution_log.json та криптоатаки
+dotnet run --project tools/SmartSecureArchiver.Zone3Runner --configuration Release
+
+# Таблиця №3 (ДП-рюкзак 0/1 vs Greedy) і Таблиця №2 (Ablation Study з параметрами знайденими ГА)
+dotnet run --project tools/SmartSecureArchiver.Benchmarks --configuration Release
+```
+
+---
+
+## Відомі обмеження
+
+1. **Оброблення великих поодиноких файлів у пам'яті:** `ArchiveOrchestrator` читає вхідний файл цілком через `File.ReadAllBytes` перед розбиттям на блоки по 16 КБ і збирає декомпресовані байти файлу у `MemoryStream` перед атомарним записом через тимчасовий файл `.tmp`. Для робочих навчальних вибірок та томів `SARC v1` це спрощує обчислення `CRC32` і гарантує атомарність, однак файли, більші за доступну оперативну пам'ять, потребують переходу на потокове поблочне читання/запис (`FileStream`).
+2. **Режим LZ77 за замовчуванням:** метод `ArchiveOrchestrator.CreateArchive` за замовчуванням використовує швидкий `Greedy LZ77` (`useLazyMatching: false`), щоб забезпечити вищу швидкодію інтерактивного архівування в CLI та GUI; режим `Lazy Greedy LZ77` (додаткове зменшення розміру на структурованих і текстових файлах) доступний через параметризовані конфігурації `BlockCompressor` та експериментальні запуски (`Table 1`, `Table 2`).
+3. **Пріоритети типів файлів для рюкзака:** таблиця цінностей `GetPriorityForFileType` в `ArchiveOrchestrator` фіксована відповідно до спеціалізації командного корпусу (`team/team_config.json`) і не змінюється динамічно через CLI.
+4. **Цільова платформа WPF GUI:** проєкт `SmartSecureArchiver.Gui` працює лише на ОС Windows, тоді як `Core`, `Cli`, `Tests` та `tools/*` повністю кросплатформні.

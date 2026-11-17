@@ -117,7 +117,7 @@ public static class Program
                         return 2;
                     }
 
-                    List<string> resolvedFiles = ResolveInputFiles(inputTargets);
+                    List<string> resolvedFiles = ResolveInputFiles(inputTargets, excludeDatasetLabels: false);
                     var sw = Stopwatch.StartNew();
                     IReadOnlyList<string> volumes = orchestrator.CreateArchive(resolvedFiles, output, password, maxVolumeBytes);
                     sw.Stop();
@@ -170,7 +170,7 @@ public static class Program
                     }
 
                     string benchPassword = password ?? config.DefaultPassword;
-                    List<string> resolvedFiles = ResolveInputFiles(inputTargets);
+                    List<string> resolvedFiles = ResolveInputFiles(inputTargets, excludeDatasetLabels: true);
 
                     QualityMetricResult result = QualityMetricCalculator.EvaluateRoundTrip(
                         orchestrator,
@@ -192,6 +192,41 @@ public static class Program
                     Console.WriteLine($"  Підсумкова метрика Q:   {result.TotalScoreQ:F4}");
 
                     return result.IsByteExact ? 0 : 1;
+                }
+
+                case "ablation":
+                {
+                    if (inputTargets.Count == 0)
+                    {
+                        Console.Error.WriteLine("Помилка: для команди 'ablation' вкажіть файли або каталог через -i.");
+                        PrintUsage();
+                        return 2;
+                    }
+
+                    string benchPassword = password ?? config.DefaultPassword;
+                    List<string> resolvedFiles = ResolveInputFiles(inputTargets, excludeDatasetLabels: true);
+
+                    AblationStudyReport report = AblationStudyRunner.Run(
+                        resolvedFiles,
+                        password: benchPassword,
+                        maxVolumeBytes: maxVolumeBytes,
+                        blockSize: blockSize,
+                        alpha: config.Alpha,
+                        beta: config.Beta,
+                        referenceSeconds: config.ReferenceSeconds,
+                        runsPerVariant: 3);
+
+                    string markdown = AblationStudyRunner.FormatMarkdownTable(report);
+                    Console.WriteLine(markdown);
+
+                    if (!string.IsNullOrWhiteSpace(output))
+                    {
+                        string jsonPath = Path.ChangeExtension(output, ".json");
+                        AblationStudyRunner.SaveReport(output, jsonPath, report);
+                        Console.WriteLine($"[OK] Звіт Ablation Study збережено: {output} та {jsonPath}");
+                    }
+
+                    return report.Variants.All(v => v.IsByteExact) ? 0 : 1;
                 }
 
                 default:
@@ -223,7 +258,7 @@ public static class Program
         }
     }
 
-    private static List<string> ResolveInputFiles(List<string> inputTargets)
+    private static List<string> ResolveInputFiles(List<string> inputTargets, bool excludeDatasetLabels)
     {
         var files = new List<string>();
         foreach (string target in inputTargets)
@@ -231,6 +266,7 @@ public static class Program
             if (Directory.Exists(target))
             {
                 string[] dirFiles = Directory.GetFiles(target, "*", SearchOption.TopDirectoryOnly)
+                    .Where(f => !(excludeDatasetLabels && IsDatasetManifestFile(f)))
                     .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
                 files.AddRange(dirFiles);
@@ -247,6 +283,24 @@ public static class Program
         }
 
         return files;
+    }
+
+    private static bool IsDatasetManifestFile(string filePath)
+    {
+        if (!string.Equals(Path.GetFileName(filePath), "labels.csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        try
+        {
+            string? header = File.ReadLines(filePath).FirstOrDefault();
+            return header is not null && header.StartsWith("file,type", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static CliTeamConfig LoadTeamConfig(string? explicitPath)
@@ -336,6 +390,8 @@ public static class Program
         Console.WriteLine("     extract -a <volumes...> -o <output_dir> -p <password>");
         Console.WriteLine("  3. Оцінка метрики якості Q = a*S + b*T:");
         Console.WriteLine("     benchmark -i <files_or_dir...> [-p <password>] [-m <max_volume_bytes>] [-c <team_config.json>]");
+        Console.WriteLine("  4. Ablation Study (вплив кожного блока на Q, Таблиця №2):");
+        Console.WriteLine("     ablation -i <files_or_dir...> [-o <table2.md>] [-p <password>] [-m <max_volume_bytes>] [-c <team_config.json>]");
     }
 
     private sealed record CliTeamConfig(
