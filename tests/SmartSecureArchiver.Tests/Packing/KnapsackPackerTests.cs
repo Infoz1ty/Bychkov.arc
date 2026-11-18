@@ -233,6 +233,60 @@ public class KnapsackPackerTests
             _packer.PackVolumeDp(10, [Candidate(1, weight: -1, value: 5)]));
     }
 
+    [Fact]
+    public void Dp_WhenAllBlocksFitTheVolume_SelectsAllPositiveValueBlocksWithoutDp()
+    {
+        BlockCandidate[] items =
+        [
+            Candidate(1, weight: 1_000_000, value: 3),
+            Candidate(2, weight: 2_000_000, value: 2),
+            Candidate(3, weight: 500_000, value: 0)
+        ];
+
+        PackingResult result = _packer.PackVolumeDp(capacity: 50_000_000, items);
+
+        Assert.Equal([1, 2], Ids(result.SelectedBlocks));
+        Assert.Equal([3], Ids(result.RemainingBlocks));
+        Assert.Equal(3_000_000, result.TotalWeight);
+        Assert.Equal(5, result.TotalValue);
+    }
+
+    [Fact]
+    public void Dp_WhenCapacityExceedsExactBudget_FallsBackToGreedyWithinCapacity()
+    {
+        int capacity = KnapsackPacker.MaxExactDpCapacity + 1;
+        BlockCandidate[] items =
+        [
+            Candidate(1, weight: 600_000, value: 6),
+            Candidate(2, weight: 600_000, value: 5)
+        ];
+
+        PackingResult result = _packer.PackVolumeDp(capacity, items);
+        PackingResult greedy = _packer.PackVolumeGreedy(capacity, items);
+
+        Assert.Equal(Ids(greedy.SelectedBlocks), Ids(result.SelectedBlocks));
+        Assert.Equal(greedy.TotalValue, result.TotalValue);
+        Assert.True(result.TotalWeight <= capacity);
+    }
+
+    [Fact]
+    public void Dp_WhenCellBudgetExceeded_FallsBackToGreedyWithinCapacity()
+    {
+        const int capacity = 200_000;
+        BlockCandidate[] items = Enumerable.Range(1, 250)
+            .Select(i => Candidate(i, weight: 1_000, value: 1))
+            .ToArray();
+
+        Assert.True((long)items.Length * (capacity + 1) > KnapsackPacker.MaxExactDpCells);
+
+        PackingResult result = _packer.PackVolumeDp(capacity, items);
+        PackingResult greedy = _packer.PackVolumeGreedy(capacity, items);
+
+        Assert.Equal(Ids(greedy.SelectedBlocks), Ids(result.SelectedBlocks));
+        Assert.Equal(items.Length, result.SelectedBlocks.Count + result.RemainingBlocks.Count);
+        Assert.True(result.TotalWeight <= capacity);
+    }
+
     private static BlockCandidate Candidate(int id, int weight, int value) =>
         new(BlockId: id, Weight: weight, Value: value);
 
