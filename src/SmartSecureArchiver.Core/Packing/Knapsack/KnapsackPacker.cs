@@ -5,9 +5,24 @@ namespace SmartSecureArchiver.Core.Packing;
 /// DP — точний алгоритм O(n * W) із відновленням вибраної множини.
 /// Greedy — евристика сортуванням за спаданням v/w для порівняння у звіті.
 /// Обидва алгоритми детерміновані: при рівній цінності перевага надається ранішому блоку.
+/// Для занадто великої ємності тому W точний ДП замінюється greedy-апроксимацією,
+/// щоб великий том (десятки мегабайтів) не призводив до O(n · W) зависання.
 /// </summary>
 public sealed class KnapsackPacker : IKnapsackPacker
 {
+    /// <summary>
+    /// Максимальна ємність тому W, для якої ДП ще виконується точно (1 MiB).
+    /// Для більших томів O(n · W) перетворюється на сотні мільйонів ітерацій та сотні мегабайтів
+    /// пам'яті під матрицю рішень, тому використовується greedy-апроксимація.
+    /// </summary>
+    public const int MaxExactDpCapacity = 1 << 20;
+
+    /// <summary>
+    /// Бюджет кількості клітинок ДП (кількість блоків × (W + 1)), вище якого точний ДП не запускається.
+    /// Обмежує і час виконання, і розмір бітової матриці рішень (n · W / 8 байтів).
+    /// </summary>
+    public const long MaxExactDpCells = 32_000_000;
+
     /// <inheritdoc />
     public PackingResult PackVolumeDp(int capacity, IReadOnlyList<BlockCandidate> candidates)
     {
@@ -21,6 +36,32 @@ public sealed class KnapsackPacker : IKnapsackPacker
             // Блоки нульової ваги з додатною цінністю все одно беруться.
             SelectZeroWeightItems(candidates, selected);
             return BuildResult(candidates, selected, capacity);
+        }
+
+        long totalWeight = 0;
+        for (int i = 0; i < itemCount; i++)
+        {
+            totalWeight += candidates[i].Weight;
+        }
+
+        // Швидкий точний шлях: якщо всі блоки вміщуються у том, то оптимальним є взяти
+        // кожен блок із додатною цінністю. Це типовий випадок GUI з одним великим томом:
+        // ДП з W у десятки мегабайтів тут не потрібен взагалі.
+        if (totalWeight <= capacity)
+        {
+            for (int i = 0; i < itemCount; i++)
+            {
+                selected[i] = candidates[i].Value > 0;
+            }
+
+            return BuildResult(candidates, selected, capacity);
+        }
+
+        // Запобіжник: ДП виконується лише в межах бюджету часу та пам'яті.
+        // Інакше — детермінований greedy за v/w (той самий алгоритм, що й у Table 3).
+        if (capacity > MaxExactDpCapacity || (long)itemCount * (capacity + 1) > MaxExactDpCells)
+        {
+            return PackVolumeGreedy(capacity, candidates);
         }
 
         int wordsPerRow = ((capacity + 1) + 63) / 64;
