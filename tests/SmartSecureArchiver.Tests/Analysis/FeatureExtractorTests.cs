@@ -136,4 +136,182 @@ public class FeatureExtractorTests
         Assert.Equal(first.Autocorrelation16, second.Autocorrelation16);
         Assert.Equal(first.BigramEntropy, second.BigramEntropy);
     }
+
+    [Fact]
+    public void Extract_SinglePassMatchesNaivePerFeatureReference()
+    {
+        var random = new Random(2026);
+        byte[] data = new byte[4096];
+        random.NextBytes(data);
+        for (int i = 0; i < data.Length; i += 97)
+        {
+            data[i] = (byte)'\n';
+        }
+
+        FileFeatures actual = _extractor.Extract(data);
+
+        Assert.Equal(ReferenceEntropy(data), actual.Entropy, 12);
+        Assert.Equal(ReferenceAsciiRatio(data), actual.AsciiRatio, 12);
+        Assert.Equal(ReferenceNewlineDistanceAvg(data), actual.NewlineDistanceAvg, 12);
+        Assert.Equal(ReferenceBigramEntropy(data), actual.BigramEntropy, 12);
+
+        double[] expectedHistogram = ReferenceHistogram32(data);
+        for (int i = 0; i < FeatureExtractor.HistogramBucketCount; i++)
+        {
+            Assert.Equal(expectedHistogram[i], actual.Histogram32[i], 12);
+        }
+
+        double[] expectedAutocorrelation = ReferenceAutocorrelation16(data);
+        for (int i = 0; i < FeatureExtractor.AutocorrelationLags; i++)
+        {
+            Assert.Equal(expectedAutocorrelation[i], actual.Autocorrelation16[i], 12);
+        }
+    }
+
+    private static double ReferenceEntropy(byte[] data)
+    {
+        int[] counts = new int[256];
+        foreach (byte value in data)
+        {
+            counts[value]++;
+        }
+
+        double entropy = 0;
+        foreach (int count in counts)
+        {
+            if (count == 0)
+            {
+                continue;
+            }
+
+            double probability = (double)count / data.Length;
+            entropy -= probability * Math.Log2(probability);
+        }
+
+        return entropy;
+    }
+
+    private static double[] ReferenceHistogram32(byte[] data)
+    {
+        double[] histogram = new double[32];
+        foreach (byte value in data)
+        {
+            histogram[value / 8]++;
+        }
+
+        for (int i = 0; i < histogram.Length; i++)
+        {
+            histogram[i] /= data.Length;
+        }
+
+        return histogram;
+    }
+
+    private static double ReferenceAsciiRatio(byte[] data)
+    {
+        int printable = data.Count(value =>
+            value is >= 0x20 and <= 0x7E || value is 0x09 or 0x0A or 0x0D);
+        return (double)printable / data.Length;
+    }
+
+    private static double ReferenceNewlineDistanceAvg(byte[] data)
+    {
+        int previousIndex = -1;
+        long totalDistance = 0;
+        int gaps = 0;
+
+        for (int i = 0; i < data.Length; i++)
+        {
+            if (data[i] != (byte)'\n')
+            {
+                continue;
+            }
+
+            if (previousIndex >= 0)
+            {
+                totalDistance += i - previousIndex;
+                gaps++;
+            }
+
+            previousIndex = i;
+        }
+
+        return gaps == 0 ? 0 : (double)totalDistance / gaps;
+    }
+
+    private static double[] ReferenceAutocorrelation16(byte[] data)
+    {
+        double[] result = new double[16];
+
+        for (int lag = 1; lag <= 16; lag++)
+        {
+            int pairCount = data.Length - lag;
+            if (pairCount < 2)
+            {
+                continue;
+            }
+
+            double sumX = 0;
+            double sumY = 0;
+            double sumXx = 0;
+            double sumYy = 0;
+            double sumXy = 0;
+
+            for (int i = 0; i < pairCount; i++)
+            {
+                double x = data[i];
+                double y = data[i + lag];
+                sumX += x;
+                sumY += y;
+                sumXx += x * x;
+                sumYy += y * y;
+                sumXy += x * y;
+            }
+
+            double meanX = sumX / pairCount;
+            double meanY = sumY / pairCount;
+            double covariance = (sumXy / pairCount) - (meanX * meanY);
+            double varianceX = (sumXx / pairCount) - (meanX * meanX);
+            double varianceY = (sumYy / pairCount) - (meanY * meanY);
+            double denominator = Math.Sqrt(varianceX * varianceY);
+
+            if (denominator <= 1e-12)
+            {
+                continue;
+            }
+
+            result[lag - 1] = Math.Clamp(covariance / denominator, -1.0, 1.0);
+        }
+
+        return result;
+    }
+
+    private static double ReferenceBigramEntropy(byte[] data)
+    {
+        if (data.Length < 2)
+        {
+            return 0;
+        }
+
+        int[] counts = new int[65536];
+        for (int i = 1; i < data.Length; i++)
+        {
+            counts[(data[i - 1] << 8) | data[i]]++;
+        }
+
+        int pairCount = data.Length - 1;
+        double entropy = 0;
+        foreach (int count in counts)
+        {
+            if (count == 0)
+            {
+                continue;
+            }
+
+            double probability = (double)count / pairCount;
+            entropy -= probability * Math.Log2(probability);
+        }
+
+        return entropy;
+    }
 }
